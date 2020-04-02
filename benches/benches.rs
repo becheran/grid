@@ -10,7 +10,7 @@ fn init_vec_flat(size: usize) -> Vec<u32> {
 }
 
 fn init_grid(size: usize) -> Grid<u32> {
-    Grid::new(size, size, 0)
+    Grid::init(size, size, 0)
 }
 
 fn get_vec_vec(x: usize, y: usize) -> u32 {
@@ -48,7 +48,7 @@ fn set_grid(x: usize, y: usize) {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    // Init
+    // New
     c.bench_function("Init vec vec 10x10", |b| {
         b.iter(|| init_vec_vec(black_box(10)))
     });
