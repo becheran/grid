@@ -26,7 +26,7 @@ macro_rules! grid {
         let vec = vec![$($x),*];
         Grid { rows : 1, cols: vec.len(), data: vec }
     } };
-    ( [$( $x0:expr ),*] $($( $x:expr ),*);* ) => {
+    ( [$( $x0:expr ),*] $([$( $x:expr ),*])* ) => {
         {
             let mut _assert_width0 = [(); count!($($x0)*)];
             let mut vec = Vec::new();
@@ -126,8 +126,7 @@ mod test {
 
     #[test]
     fn macro_init() {
-        //TODO let grid = grid![[1, 2, 3][4, 5, 6]];
-        let grid = grid![[1,2,3]4,5,6];
+        let grid = grid![[1, 2, 3][4, 5, 6]];
         assert_eq!(grid[0][0], 1);
         assert_eq!(grid[0][1], 2);
         assert_eq!(grid[0][2], 3);
@@ -137,9 +136,17 @@ mod test {
     }
 
     #[test]
+    fn macro_init_2() {
+        let grid = grid![[1, 2, 3]
+                         [4, 5, 6]
+                         [7,8,9]];
+        assert_eq!(grid.size(), (3, 3))
+    }
+
+    #[test]
     fn macro_one_row() {
         let grid: Grid<usize> = grid![[1, 2, 3, 4]];
-        assert_eq!(grid.size(), (1, 0));
+        assert_eq!(grid.size(), (1, 4));
         assert_eq!(grid[0][0], 1);
         assert_eq!(grid[0][1], 2);
         assert_eq!(grid[0][2], 3);
