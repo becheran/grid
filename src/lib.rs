@@ -1,18 +1,28 @@
 use std::ops::Index;
 use std::ops::IndexMut;
 
+/// Stores elements of a certain type in a 2D grid structure.
 pub struct Grid<T> {
     data: Vec<T>,
     cols: usize,
     rows: usize,
 }
 
-#[allow(unused_macros)]
+#[doc(hidden)]
+#[macro_export]
 macro_rules! count {
     () => (0usize);
-    ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
+    ( $x:tt $($xs:tt)* ) => (1usize + $crate::count!($($xs)*));
 }
 
+/// Init a grid with values.
+/// ```
+/// use grid::grid;
+/// let grid = grid![[1, 2, 3]
+/// [4, 5, 6]
+/// [7, 8, 9]];
+/// assert_eq!(grid.size(), (3, 3))
+/// ```
 #[macro_export]
 macro_rules! grid {
     () => {
@@ -24,25 +34,23 @@ macro_rules! grid {
     };
     ( [$( $x:expr ),* ]) => { {
         let vec = vec![$($x),*];
-        Grid { rows : 1, cols: vec.len(), data: vec }
+        $crate::Grid::from_vec(&vec, vec.len())
     } };
     ( [$( $x0:expr ),*] $([$( $x:expr ),*])* ) => {
         {
-            let mut _assert_width0 = [(); count!($($x0)*)];
+            let mut _assert_width0 = [(); $crate::count!($($x0)*)];
             let mut vec = Vec::new();
-            let rows = 1usize;
-            let cols = count!($($x0)*);
+            let cols = $crate::count!($($x0)*);
 
             $( vec.push($x0); )*
 
             $(
-                let rows = rows + 1usize;
-                let _assert_width = [(); count!($($x)*)];
+                let _assert_width = [(); $crate::count!($($x)*)];
                 _assert_width0 = _assert_width;
                 $( vec.push($x); )*
             )*
 
-            Grid { rows : rows, cols: cols, data: vec }
+            $crate::Grid::from_vec(&vec, cols)
         }
     };
 }
@@ -81,10 +89,54 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Returns a grid from a vector with a given column length.
+    /// The length of `vec` must be a multiple of `cols`.
+    ///
+    /// For example:
+    ///
+    /// ```
+    /// use grid::Grid;
+    /// let grid = Grid::from_vec(&vec![1,2,3,4,5,6], 3);
+    /// assert_eq!(grid.size(), (2, 3));
+    /// ```
+    ///
+    /// will create a grid with the following layout:
+    /// [1,2,3]
+    /// [4,5,6]
+    ///
+    /// This example will fail, because `vec.len()` is not a multiple of `cols`:
+    ///
+    /// ``` should_panic
+    /// use grid::Grid;
+    /// Grid::from_vec(&vec![1,2,3,4,5], 3);
+    /// ```
+    pub fn from_vec(vec: &Vec<T>, cols: usize) -> Grid<T> {
+        if vec.len() == 0 {
+            if cols == 0 {
+                return grid![];
+            } else {
+                panic!("Vector length is zero, but cols is {:?}", cols);
+            }
+        }
+        if vec.len() % cols != 0 {
+            panic!("Vector length must be a multiple of cols.");
+        }
+        Grid {
+            data: vec.to_vec(),
+            rows: vec.len() / cols,
+            cols: cols,
+        }
+    }
+
     /// Access a certain element in the grid.
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
-    pub fn get(&self, row: usize, column: usize) -> Option<&T> {
-        self.data.get(row * self.cols + column % self.cols)
+    pub fn get(&self, row: usize, col: usize) -> Option<&T> {
+        if row < self.rows && col < self.cols() {
+            //unsafe { Some(&self.index(row).get_unchecked(col)) }
+            Some(&self.data[row * self.cols() + col])
+        } else {
+            None
+        }
     }
 
     /// Returns the size of the gird as a two element tuple.
@@ -92,30 +144,35 @@ impl<T: Clone> Grid<T> {
     pub fn size(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
+
+    /// Returns the number of rows of the grid.
+    pub fn rows(&self) -> usize {
+        self.rows
+    }
+
+    /// Returns the number of columns of the grid.
+    pub fn cols(&self) -> usize {
+        self.cols
+    }
 }
 
 impl<T: Clone> Index<usize> for Grid<T> {
     type Output = [T];
 
     fn index(&self, idx: usize) -> &Self::Output {
-        if idx >= self.rows {
+        if idx < self.rows {
+            &self.data[(idx * &self.cols)..]
+        } else {
             panic!(
-                "index out of bounds: grid has {:?} but the index is {:?}",
+                "index {:?} out of bounds. Grid has {:?} rows.",
                 self.rows, idx
             );
         }
-        &self.data[(idx * &self.cols)..]
     }
 }
 
 impl<T: Clone> IndexMut<usize> for Grid<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        if idx >= self.rows {
-            panic!(
-                "index out of bounds: grid has {:?} but the index is {:?}",
-                self.rows, idx
-            );
-        }
         &mut self.data[(idx * &self.cols)..]
     }
 }
@@ -139,8 +196,17 @@ mod test {
     fn macro_init_2() {
         let grid = grid![[1, 2, 3]
                          [4, 5, 6]
-                         [7,8,9]];
+                         [7, 8, 9]];
         assert_eq!(grid.size(), (3, 3))
+    }
+
+    #[test]
+    fn macro_init_char() {
+        let grid = grid![['a', 'b', 'c']
+                         ['a', 'b', 'c']
+                         ['a', 'b', 'c']];
+        assert_eq!(grid.size(), (3, 3));
+        assert_eq!(grid[1][1], 'b');
     }
 
     #[test]
@@ -156,6 +222,30 @@ mod test {
     fn macro_init_empty() {
         let grid: Grid<usize> = grid![];
         assert_eq!(grid.size(), (0, 0));
+    }
+
+    #[test]
+    fn from_vec_zero() {
+        let grid: Grid<u8> = Grid::from_vec(&vec![], 0);
+        assert_eq!(grid.size(), (0, 0));
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_vec_panics_1() {
+        let _: Grid<u8> = Grid::from_vec(&vec![1, 2, 3], 0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_vec_panics_2() {
+        let _: Grid<u8> = Grid::from_vec(&vec![1, 2, 3], 2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn from_vec_panics_3() {
+        let _: Grid<u8> = Grid::from_vec(&vec![], 1);
     }
 
     #[test]
