@@ -40,16 +40,20 @@ macro_rules! grid {
     ( [$( $x0:expr ),*] $([$( $x:expr ),*])* ) => {
         {
             let mut _assert_width0 = [(); $crate::count!($($x0)*)];
-            let mut vec = Vec::new();
+            
             let cols = $crate::count!($($x0)*);
-
-            $( vec.push($x0); )*
+            let rows = 1usize;
 
             $(
                 let _assert_width = [(); $crate::count!($($x)*)];
                 _assert_width0 = _assert_width;
-                $( vec.push($x); )*
+                let rows = rows + 1usize;
             )*
+
+            let mut vec = Vec::with_capacity(rows * cols);
+
+            $( vec.push($x0); )*
+            $( $( vec.push($x); )* )*
 
             $crate::Grid::from_vec(vec, cols)
         }

@@ -51,6 +51,17 @@ fn criterion_benchmark(c: &mut Criterion) {
             ]
         })
     });
+    c.bench_function("Macro init grid from_vec", |b| {
+        b.iter(|| {
+            let vec = vec![
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7,
+                8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
+                6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3,
+                4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+            ];
+            Grid::from_vec(vec, 10)
+        })
+    });
     c.bench_function("Macro init grid", |b| {
         b.iter(|| {
             grid![[0,1,2,3,4,5,6,7,8,9]
