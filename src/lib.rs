@@ -160,6 +160,16 @@ impl<T: Clone> Grid<T> {
     }
 }
 
+impl<T: Clone> Clone for Grid<T> {
+    fn clone(&self) -> Self {
+        Grid {
+            rows: self.rows,
+            cols: self.cols,
+            data: self.data.clone(),
+        }
+    }
+}
+
 impl<T: Clone> Index<usize> for Grid<T> {
     type Output = [T];
 
@@ -184,6 +194,15 @@ impl<T: Clone> IndexMut<usize> for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn clone() {
+        let grid = grid![[1, 2, 3][4, 5, 6]];
+        let mut clone = grid.clone();
+        clone[0][2] = 10;
+        assert_eq!(grid[0][2], 3);
+        assert_eq!(clone[0][2], 10);
+    }
 
     #[test]
     fn macro_init() {
