@@ -101,7 +101,7 @@ impl<T: Clone> Grid<T> {
     ///
     /// ```
     /// use grid::Grid;
-    /// let grid = Grid::from_vec(&vec![1,2,3,4,5,6], 3);
+    /// let grid = Grid::from_vec(vec![1,2,3,4,5,6], 3);
     /// assert_eq!(grid.size(), (2, 3));
     /// ```
     ///
@@ -113,7 +113,7 @@ impl<T: Clone> Grid<T> {
     ///
     /// ``` should_panic
     /// use grid::Grid;
-    /// Grid::from_vec(&vec![1,2,3,4,5], 3);
+    /// Grid::from_vec(vec![1,2,3,4,5], 3);
     /// ```
     pub fn from_vec(vec: Vec<T>, cols: usize) -> Grid<T> {
         if vec.len() == 0 {
