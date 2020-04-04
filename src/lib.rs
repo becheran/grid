@@ -143,6 +143,17 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Mutable access to a certain element in the grid.
+    /// Returns None if an element beyond the grid bounds is tried to be accessed.
+    pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
+        if row < self.rows && col < self.cols() {
+            let cols = self.cols();
+            unsafe { Some(self.data.get_unchecked_mut(row * cols + col)) }
+        } else {
+            None
+        }
+    }
+
     /// Returns the size of the gird as a two element tuple.
     /// First element are the number of rows and the second the columns.
     pub fn size(&self) -> (usize, usize) {
@@ -305,6 +316,21 @@ mod test {
     fn get_none() {
         let grid = Grid::init(1, 2, 3);
         assert_eq!(grid.get(1, 0), None);
+    }
+
+    #[test]
+    fn get_mut() {
+        let mut grid = Grid::init(1, 2, 3);
+        let mut_ref = grid.get_mut(0, 0).unwrap();
+        *mut_ref = 5;
+        assert_eq!(grid[0][0], 5);
+    }
+
+    #[test]
+    fn get_mut_none() {
+        let mut grid = Grid::init(1, 2, 3);
+        let mut_ref = grid.get_mut(1, 4);
+        assert_eq!(mut_ref, None);
     }
 
     #[test]
