@@ -132,8 +132,8 @@ impl<T: Clone> Grid<T> {
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
     pub fn get(&self, row: usize, col: usize) -> Option<&T> {
         if row < self.rows && col < self.cols() {
-            //unsafe { Some(&self.index(row).get_unchecked(col)) }
-            Some(&self.data[row * self.cols() + col])
+            unsafe { Some(&self.data.get_unchecked(row * self.cols() + col)) }
+            //Some(&self.data.get_unchecked(row * self.cols() + col))
         } else {
             None
         }
