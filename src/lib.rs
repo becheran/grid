@@ -34,7 +34,8 @@ macro_rules! grid {
     };
     ( [$( $x:expr ),* ]) => { {
         let vec = vec![$($x),*];
-        $crate::Grid::from_vec(&vec, vec.len())
+        let len  = vec.len();
+        $crate::Grid::from_vec(vec, len)
     } };
     ( [$( $x0:expr ),*] $([$( $x:expr ),*])* ) => {
         {
@@ -50,7 +51,7 @@ macro_rules! grid {
                 $( vec.push($x); )*
             )*
 
-            $crate::Grid::from_vec(&vec, cols)
+            $crate::Grid::from_vec(vec, cols)
         }
     };
 }
@@ -110,7 +111,7 @@ impl<T: Clone> Grid<T> {
     /// use grid::Grid;
     /// Grid::from_vec(&vec![1,2,3,4,5], 3);
     /// ```
-    pub fn from_vec(vec: &Vec<T>, cols: usize) -> Grid<T> {
+    pub fn from_vec(vec: Vec<T>, cols: usize) -> Grid<T> {
         if vec.len() == 0 {
             if cols == 0 {
                 return grid![];
@@ -121,9 +122,10 @@ impl<T: Clone> Grid<T> {
         if vec.len() % cols != 0 {
             panic!("Vector length must be a multiple of cols.");
         }
+        let rows = vec.len();
         Grid {
-            data: vec.to_vec(),
-            rows: vec.len() / cols,
+            data: vec,
+            rows: rows / cols,
             cols: cols,
         }
     }
@@ -226,26 +228,26 @@ mod test {
 
     #[test]
     fn from_vec_zero() {
-        let grid: Grid<u8> = Grid::from_vec(&vec![], 0);
+        let grid: Grid<u8> = Grid::from_vec(vec![], 0);
         assert_eq!(grid.size(), (0, 0));
     }
 
     #[test]
     #[should_panic]
     fn from_vec_panics_1() {
-        let _: Grid<u8> = Grid::from_vec(&vec![1, 2, 3], 0);
+        let _: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 0);
     }
 
     #[test]
     #[should_panic]
     fn from_vec_panics_2() {
-        let _: Grid<u8> = Grid::from_vec(&vec![1, 2, 3], 2);
+        let _: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 2);
     }
 
     #[test]
     #[should_panic]
     fn from_vec_panics_3() {
-        let _: Grid<u8> = Grid::from_vec(&vec![], 1);
+        let _: Grid<u8> = Grid::from_vec(vec![], 1);
     }
 
     #[test]
