@@ -3,7 +3,7 @@ stages:
 
 build-rust-latest:
     stage: build
-    image: rustlang/rust:latest
+    image: rustlang/rust
     script:
         - cargo build --verbose
         - cargo test --verbose
