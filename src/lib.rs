@@ -40,7 +40,6 @@ macro_rules! grid {
     ( [$( $x0:expr ),*] $([$( $x:expr ),*])* ) => {
         {
             let mut _assert_width0 = [(); $crate::count!($($x0)*)];
-            
             let cols = $crate::count!($($x0)*);
             let rows = 1usize;
 
@@ -139,7 +138,6 @@ impl<T: Clone> Grid<T> {
     pub fn get(&self, row: usize, col: usize) -> Option<&T> {
         if row < self.rows && col < self.cols() {
             unsafe { Some(&self.data.get_unchecked(row * self.cols() + col)) }
-            //Some(&self.data.get_unchecked(row * self.cols() + col))
         } else {
             None
         }
