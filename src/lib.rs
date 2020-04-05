@@ -448,7 +448,8 @@ impl<T: Clone> Index<usize> for Grid<T> {
 
     fn index(&self, idx: usize) -> &Self::Output {
         if idx < self.rows {
-            &self.data[(idx * &self.cols)..]
+            let start_idx = idx * self.cols;
+            &self.data[start_idx..start_idx + self.cols]
         } else {
             panic!(
                 "index {:?} out of bounds. Grid has {:?} rows.",
