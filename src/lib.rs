@@ -134,11 +134,26 @@ impl<T: Clone> Grid<T> {
         }
     }
 
+    /// Returns a reference to an element, without performing bound checks.
+    /// Generally not recommended, use with caution!
+    /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
+    pub unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
+        self.data.get_unchecked(row * self.cols() + col)
+    }
+
+    /// Returns a mutable reference to an element, without performing bound checks.
+    /// Generally not recommended, use with caution!
+    /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
+    pub unsafe fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
+        let cols = self.cols;
+        self.data.get_unchecked_mut(row * cols + col)
+    }
+
     /// Access a certain element in the grid.
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
     pub fn get(&self, row: usize, col: usize) -> Option<&T> {
-        if row < self.rows && col < self.cols() {
-            unsafe { Some(&self.data.get_unchecked(row * self.cols() + col)) }
+        if row < self.rows && col < self.cols {
+            unsafe { Some(self.get_unchecked(row, col)) }
         } else {
             None
         }
@@ -147,9 +162,8 @@ impl<T: Clone> Grid<T> {
     /// Mutable access to a certain element in the grid.
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
     pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
-        if row < self.rows && col < self.cols() {
-            let cols = self.cols();
-            unsafe { Some(self.data.get_unchecked_mut(row * cols + col)) }
+        if row < self.rows && col < self.cols {
+            unsafe { Some(self.get_unchecked_mut(row, col)) }
         } else {
             None
         }
