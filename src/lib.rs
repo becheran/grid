@@ -1,3 +1,4 @@
+use std::fmt;
 use std::ops::Index;
 use std::ops::IndexMut;
 
@@ -202,9 +203,40 @@ impl<T: Clone> IndexMut<usize> for Grid<T> {
     }
 }
 
+impl<T: fmt::Debug> fmt::Debug for Grid<T> {
+    #[allow(unused_must_use)]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[");
+        if self.cols > 0 {
+            for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
+                write!(f, "{:?}", &self.data[i..(i + self.cols)]);
+            }
+        }
+        write!(f, "]")
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn fmt_empty() {
+        let grid: Grid<u8> = grid![];
+        assert_eq!(format!("{:?}", grid), "[]");
+    }
+
+    #[test]
+    fn fmt_row() {
+        let grid: Grid<u8> = grid![[1, 2, 3]];
+        assert_eq!(format!("{:?}", grid), "[[1, 2, 3]]");
+    }
+
+    #[test]
+    fn fmt_grid() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6][7,8,9]];
+        assert_eq!(format!("{:?}", grid), "[[1, 2, 3][4, 5, 6][7, 8, 9]]");
+    }
 
     #[test]
     fn clone() {
