@@ -195,6 +195,13 @@ impl<T: Clone> Grid<T> {
     pub fn is_empty(&self) -> bool {
         self.cols == 0 && self.rows == 0
     }
+
+    /// Clears the grid.
+    pub fn clear(&mut self) {
+        self.rows = 0;
+        self.cols = 0;
+        self.data.clear();
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -244,6 +251,13 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn clear() {
+        let mut grid: Grid<u8> = grid![[1, 2, 3]];
+        grid.clear();
+        assert!(grid.is_empty());
+    }
 
     #[test]
     fn is_empty_false() {
