@@ -347,6 +347,90 @@ impl<T: Clone> Grid<T> {
             )
         }
     }
+
+    /// Add a new row to the grid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// let row = vec![6,7,8];
+    /// grid.push_row(row);
+    /// assert_eq!(grid.rows(), 3);
+    /// assert_eq!(grid[2][0], 6);
+    /// assert_eq!(grid[2][1], 7);
+    /// assert_eq!(grid[2][2], 8);
+    /// ```
+    ///
+    /// Can also be used to init an empty grid:
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![];
+    /// let row = vec![1,2,3];
+    /// grid.push_row(row);
+    /// assert_eq!(grid.size(), (1, 3));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the grid is not empty and `row.len() != grid.cols()`.
+    pub fn push_row(&mut self, row: Vec<T>) {
+        let input_row_len = row.len();
+        if self.rows > 0 && input_row_len != self.cols {
+            panic!(
+                "pushed row does not match. Length must be {:?}, but was {:?}.",
+                self.cols, input_row_len
+            )
+        }
+        self.data.extend(row);
+        self.rows += 1;
+        self.cols = input_row_len;
+    }
+
+    /// Add a new column to the grid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// let col = vec![4,6];
+    /// grid.push_col(col);
+    /// assert_eq!(grid.cols(), 4);
+    /// assert_eq!(grid[0][3], 4);
+    /// assert_eq!(grid[1][3], 6);
+    /// ```
+    ///
+    /// Can also be used to init an empty grid:
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![];
+    /// let col = vec![1,2,3];
+    /// grid.push_col(col);
+    /// assert_eq!(grid.size(), (3, 1));
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the grid is not empty and `col.len() != grid.rows()`.
+    pub fn push_col(&mut self, col: Vec<T>) {
+        let input_col_len = col.len();
+        if self.cols > 0 && input_col_len != self.rows {
+            panic!(
+                "pushed column does not match. Length must be {:?}, but was {:?}.",
+                self.rows, input_col_len
+            )
+        }
+        for (idx, d) in col.iter().enumerate() {
+            self.data
+                .insert((idx * self.cols) + self.cols + idx, d.to_owned());
+        }
+        self.cols += 1;
+        self.rows = input_col_len;
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -396,6 +480,46 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn push_col_single() {
+        let mut grid: Grid<char> = grid![['a', 'b', 'c']];
+        grid.push_col(vec!['d']);
+        assert_eq!(grid.size(), (1, 4));
+        assert_eq!(grid[0][3], 'd');
+    }
+
+    #[test]
+    fn push_col_empty() {
+        let mut grid: Grid<char> = grid![];
+        grid.push_col(vec!['b', 'b', 'b', 'b']);
+        assert_eq!(grid.size(), (4, 1));
+        assert_eq!(grid[0][0], 'b');
+    }
+
+    #[test]
+    #[should_panic]
+    fn push_col_wrong_size() {
+        let mut grid: Grid<char> = grid![['a','a','a']['a','a','a']];
+        grid.push_col(vec!['b']);
+        grid.push_col(vec!['b', 'b']);
+    }
+
+    #[test]
+    fn push_row_empty() {
+        let mut grid: Grid<char> = grid![];
+        grid.push_row(vec!['b', 'b', 'b', 'b']);
+        assert_eq!(grid.size(), (1, 4));
+        assert_eq!(grid[0][0], 'b');
+    }
+
+    #[test]
+    #[should_panic]
+    fn push_row_wrong_size() {
+        let mut grid: Grid<char> = grid![['a','a','a']['a','a','a']];
+        grid.push_row(vec!['b']);
+        grid.push_row(vec!['b', 'b', 'b', 'b']);
+    }
 
     #[test]
     fn iter_row() {
