@@ -1,4 +1,5 @@
 use std::fmt;
+use std::iter::StepBy;
 use std::ops::Index;
 use std::ops::IndexMut;
 use std::slice::Iter;
@@ -205,7 +206,7 @@ impl<T: Clone> Grid<T> {
         self.data.clear();
     }
 
-    /// Returns an iterator over the whole grid,starting from the first row and column.
+    /// Returns an iterator over the whole grid, starting from the first row and column.
     /// ```
     /// use grid::*;
     /// let grid: Grid<u8> = grid![[1,2][3,4]];
@@ -231,6 +232,120 @@ impl<T: Clone> Grid<T> {
     /// ```
     pub fn iter_mut(&mut self) -> IterMut<T> {
         self.data.iter_mut()
+    }
+
+    /// Returns an iterator over a column.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// let mut col_iter = grid.iter_col(1);
+    /// assert_eq!(col_iter.next(), Some(&2));
+    /// assert_eq!(col_iter.next(), Some(&4));
+    /// assert_eq!(col_iter.next(), None);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the col index is out of bounds.
+    pub fn iter_col(&self, col: usize) -> StepBy<Iter<T>> {
+        if col < self.cols {
+            return self.data[col..].iter().step_by(self.cols);
+        } else {
+            panic!(
+                "out of bounds. Column must be less than {:?}, but is {:?}.",
+                self.cols, col
+            )
+        }
+    }
+
+    /// Returns a mutable iterator over a column.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// let mut col_iter = grid.iter_col_mut(1);
+    /// let next = col_iter.next();
+    /// assert_eq!(next, Some(&mut 2));
+    /// *next.unwrap() = 10;
+    /// assert_eq!(grid[0][1], 10);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the col index is out of bounds.
+    pub fn iter_col_mut(&mut self, col: usize) -> StepBy<IterMut<T>> {
+        let cols = self.cols;
+        if col < cols {
+            return self.data[col..].iter_mut().step_by(cols);
+        } else {
+            panic!(
+                "out of bounds. Column must be less than {:?}, but is {:?}.",
+                self.cols, col
+            )
+        }
+    }
+
+    /// Returns an iterator over a row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// let mut col_iter = grid.iter_row(1);
+    /// assert_eq!(col_iter.next(), Some(&3));
+    /// assert_eq!(col_iter.next(), Some(&4));
+    /// assert_eq!(col_iter.next(), Some(&5));
+    /// assert_eq!(col_iter.next(), None);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the row index is out of bounds.
+    pub fn iter_row(&self, row: usize) -> Iter<T> {
+        if row < self.rows {
+            let start = row * self.cols;
+            return self.data[start..(start + self.cols)].iter();
+        } else {
+            panic!(
+                "out of bounds. Row must be less than {:?}, but is {:?}.",
+                self.rows, row
+            )
+        }
+    }
+
+    /// Returns a mutable iterator over a row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// let mut col_iter = grid.iter_row_mut(1);
+    /// let next = col_iter.next();
+    /// *next.unwrap() = 10;
+    /// assert_eq!(grid[1][0], 10);
+    /// ```
+    ///
+    /// # Panics
+    ///
+    /// Panics if the row index is out of bounds.
+    pub fn iter_row_mut(&mut self, row: usize) -> IterMut<T> {
+        if row < self.rows {
+            let cols = self.cols;
+            let start = row * cols;
+            return self.data[start..(start + cols)].iter_mut();
+        } else {
+            panic!(
+                "out of bounds. Row must be less than {:?}, but is {:?}.",
+                self.rows, row
+            )
+        }
     }
 }
 
@@ -281,6 +396,44 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn iter_row() {
+        let grid: Grid<u8> = grid![[1,2,3][1,2,3]];
+        let mut iter = grid.iter_row(0);
+        assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&3));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    #[should_panic]
+    fn iter_row_empty() {
+        let grid: Grid<u8> = grid![];
+        let _ = grid.iter_row(0);
+    }
+
+    #[test]
+    #[should_panic]
+    fn iter_row_out_of_bound() {
+        let grid: Grid<u8> = grid![[1,2,3][1,2,3]];
+        let _ = grid.iter_row(2);
+    }
+
+    #[test]
+    #[should_panic]
+    fn iter_col_out_of_bound() {
+        let grid: Grid<u8> = grid![[1,2,3][1,2,3]];
+        let _ = grid.iter_col(3);
+    }
+
+    #[test]
+    #[should_panic]
+    fn iter_col_zero() {
+        let grid: Grid<u8> = grid![];
+        let _ = grid.iter_col(0);
+    }
 
     #[test]
     fn iter() {
