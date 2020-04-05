@@ -1,6 +1,8 @@
 use std::fmt;
 use std::ops::Index;
 use std::ops::IndexMut;
+use std::slice::Iter;
+use std::slice::IterMut;
 
 /// Stores elements of a certain type in a 2D grid structure.
 pub struct Grid<T> {
@@ -202,6 +204,34 @@ impl<T: Clone> Grid<T> {
         self.cols = 0;
         self.data.clear();
     }
+
+    /// Returns an iterator over the whole grid,starting from the first row and column.
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<u8> = grid![[1,2][3,4]];
+    /// let mut iter = grid.iter();
+    /// assert_eq!(iter.next(), Some(&1));
+    /// assert_eq!(iter.next(), Some(&2));
+    /// assert_eq!(iter.next(), Some(&3));
+    /// assert_eq!(iter.next(), Some(&4));
+    /// assert_eq!(iter.next(), None);
+    /// ```
+    pub fn iter(&self) -> Iter<T> {
+        self.data.iter()
+    }
+
+    /// Returns an mutable iterator over the whole grid that allows modifying each value.
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1,2][3,4]];
+    /// let mut iter = grid.iter_mut();
+    /// let next = iter.next();
+    /// assert_eq!(next, Some(&mut 1));
+    /// *next.unwrap() = 10;
+    /// ```
+    pub fn iter_mut(&mut self) -> IterMut<T> {
+        self.data.iter_mut()
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -251,6 +281,17 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn iter() {
+        let grid: Grid<u8> = grid![[1,2][3,4]];
+        let mut iter = grid.iter();
+        assert_eq!(iter.next(), Some(&1));
+        assert_eq!(iter.next(), Some(&2));
+        assert_eq!(iter.next(), Some(&3));
+        assert_eq!(iter.next(), Some(&4));
+        assert_eq!(iter.next(), None);
+    }
 
     #[test]
     fn clear() {
