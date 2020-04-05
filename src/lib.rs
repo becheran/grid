@@ -27,11 +27,7 @@ macro_rules! count {
 #[macro_export]
 macro_rules! grid {
     () => {
-        Grid {
-            rows: 0,
-            cols: 0,
-            data: vec![],
-        }
+        $crate::Grid::from_vec(vec![], 0)
     };
     ( [$( $x:expr ),* ]) => { {
         let vec = vec![$($x),*];
@@ -116,21 +112,25 @@ impl<T: Clone> Grid<T> {
     /// Grid::from_vec(vec![1,2,3,4,5], 3);
     /// ```
     pub fn from_vec(vec: Vec<T>, cols: usize) -> Grid<T> {
-        if vec.len() == 0 {
+        let rows = vec.len();
+        if rows == 0 {
             if cols == 0 {
-                return grid![];
+                return Grid {
+                    data: vec![],
+                    rows: 0,
+                    cols: 0,
+                };
             } else {
                 panic!("Vector length is zero, but cols is {:?}", cols);
             }
-        }
-        if vec.len() % cols != 0 {
+        } else if rows % cols != 0 {
             panic!("Vector length must be a multiple of cols.");
-        }
-        let rows = vec.len();
-        Grid {
-            data: vec,
-            rows: rows / cols,
-            cols: cols,
+        } else {
+            Grid {
+                data: vec,
+                rows: rows / cols,
+                cols: cols,
+            }
         }
     }
 
@@ -184,6 +184,17 @@ impl<T: Clone> Grid<T> {
     pub fn cols(&self) -> usize {
         self.cols
     }
+
+    /// Returns true if the grid contains no elements.
+    /// For example:
+    /// ```
+    /// use grid::*;
+    /// let grid : Grid<u8> = grid![];
+    /// assert!(grid.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.cols == 0 && self.rows == 0
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -233,6 +244,18 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn is_empty_false() {
+        let grid: Grid<u8> = grid![[1, 2, 3]];
+        assert!(!grid.is_empty());
+    }
+
+    #[test]
+    fn is_empty_true() {
+        let grid: Grid<u8> = grid![];
+        assert!(grid.is_empty());
+    }
 
     #[test]
     fn fmt_empty() {
