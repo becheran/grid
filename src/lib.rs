@@ -1,6 +1,7 @@
+use std::cmp::Eq;
 /// # Two Dimensional Grid
 ///
-/// The grid crate provides a basic 2D dynamic data structure.
+/// Continuos growable 2D data structure.
 /// The purpose of this crate is to provide an universal data structure that is faster,
 /// uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution.
 ///
@@ -507,9 +508,51 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
     }
 }
 
+impl<T: Eq> PartialEq for Grid<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.rows == other.rows && self.cols == other.cols && self.data == other.data
+    }
+}
+
+impl<T: Eq> Eq for Grid<T> {}
+
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn ne_full_empty() {
+        let g1 = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        let g2: Grid<u8> = grid![];
+        assert_ne!(g1, g2);
+    }
+
+    #[test]
+    fn ne() {
+        let g1 = Grid::from_vec(vec![1, 2, 3, 5], 2);
+        let g2 = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        assert_ne!(g1, g2);
+    }
+
+    #[test]
+    fn ne_dif_rows() {
+        let g1 = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        let g2 = Grid::from_vec(vec![1, 2, 3, 4], 1);
+        assert_ne!(g1, g2);
+    }
+
+    #[test]
+    fn equal_empty() {
+        let grid: Grid<char> = grid![];
+        let grid2: Grid<char> = grid![];
+        assert_eq!(grid, grid2);
+    }
+    #[test]
+    fn equal() {
+        let grid: Grid<char> = grid![['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']];
+        let grid2: Grid<char> = grid![['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']];
+        assert_eq!(grid, grid2);
+    }
 
     #[test]
     #[should_panic]
