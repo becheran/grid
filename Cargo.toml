@@ -3,6 +3,20 @@ name = "grid"
 version = "0.1.0"
 authors = ["Armin Becher <armin.becher@gmai.com>"]
 edition = "2018"
+description = "Dynamic generic 2D data structure."
+keywords = [ "2D", "array", "matrix", "data structure", "2D vector"]
+categories = [ "science", "data-structure",]
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/becheran/grid"
+documentation = "https://docs.rs/grid"
+
+[badges.gitlab]
+repository = "becheran/grid_ci"
+branch = "master"
+
+[badges.maintenance]
+status = "actively-developed"
 
 [dev-dependencies]
 criterion = "0.3.1"
