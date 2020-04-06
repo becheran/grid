@@ -1,24 +1,24 @@
 /// # Two Dimensional Grid
-/// 
-/// The grid crate provides a basic 2D dynamic data structure. 
+///
+/// The grid crate provides a basic 2D dynamic data structure.
 /// The purpose of this crate is to provide an universal data structure that is faster,
-/// uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution. 
-/// 
-/// Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuos 
+/// uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution.
+///
+/// Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuos
 /// memory data layout. See also [this](https://stackoverflow.com/questions/17259877/1d-or-2d-array-whats-faster)
 /// explanation of why you should probably use a one-dimensional array approach.
-/// 
+///
 /// Note that this crate uses a [*row-major*](https://eli.thegreenplace.net/2015/memory-layout-of-multi-dimensional-arrays) memory layout.
 /// Therefore, `grid.push_row()` is way faster then the `grid.push_col()` operation.
-/// 
+///
 /// This crate will always provide a 2D data structure. If you need three or more dimensions take a look at the
 /// [ndarray crate](https://docs.rs/ndarray/0.13.0/ndarray/). The `grid` create is a container for all kind of data.
-/// If you need to perform matrix operations, you are better of with a linear algebra lib, such as 
+/// If you need to perform matrix operations, you are better of with a linear algebra lib, such as
 /// [cgmath](https://docs.rs/cgmath/0.17.0/cgmath/) or [nalgebra](https://docs.rs/nalgebra/0.21.0/nalgebra/).
-/// 
+///
 /// No other dependencies except for the std lib are used.
-/// 
-/// Most of the functions `std::Vec<T>` offer are also implemented in `grid` and slightly modified for a 2D data object. 
+///
+/// Most of the functions `std::Vec<T>` offer are also implemented in `grid` and slightly modified for a 2D data object.
 use std::fmt;
 use std::iter::StepBy;
 use std::ops::Index;
@@ -418,7 +418,7 @@ impl<T: Clone> Grid<T> {
     /// Please note that `Grid` uses a Row-Major memory layout. Therefore, the `push_col()`
     /// operation requires quite a lot of memory shifting and will be significantly slower compared
     /// to a `push_row()` operation.
-    /// 
+    ///
     /// # Examples
     ///
     /// ```
