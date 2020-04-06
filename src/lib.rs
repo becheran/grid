@@ -1,39 +1,36 @@
+/*! 
+# Two Dimensional Grid
+Continuos growable 2D data structure.
+The purpose of this crate is to provide an universal data structure that is faster,
+uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution.
+
+Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuos
+memory data layout. See also [this](https://stackoverflow.com/questions/17259877/1d-or-2d-array-whats-faster)
+explanation of why you should probably use a one-dimensional array approach.
+
+Note that this crate uses a [*row-major*](https://eli.thegreenplace.net/2015/memory-layout-of-multi-dimensional-arrays) memory layout.
+Therefore, `grid.push_row()` is way faster then the `grid.push_col()` operation.
+
+This crate will always provide a 2D data structure. If you need three or more dimensions take a look at the
+[ndarray](https://docs.rs/ndarray/0.13.0/ndarray/) library. The `grid` create is a container for all kind of data.
+If you need to perform matrix operations, you are better of with a linear algebra lib, such as
+[cgmath](https://docs.rs/cgmath/0.17.0/cgmath/) or [nalgebra](https://docs.rs/nalgebra/0.21.0/nalgebra/).
+No other dependencies except for the std lib are used.
+Most of the functions `std::Vec<T>` offer are also implemented in `grid` and slightly modified for a 2D data object.
+# Examples
+```
+use grid::*;
+let mut grid = grid![[1,2,3]
+                     [4,5,6]];
+assert_eq!(grid, Grid::from_vec(vec![1,2,3,4,5,6],3));
+assert_eq!(grid.get(0,2), Some(&3));
+assert_eq!(grid[1][1], 5);
+assert_eq!(grid.size(), (2,3));
+grid.push_row(vec![7,8,9]);
+assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
+ ```
+*/
 use std::cmp::Eq;
-/// # Two Dimensional Grid
-///
-/// Continuos growable 2D data structure.
-/// The purpose of this crate is to provide an universal data structure that is faster,
-/// uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution.
-///
-/// Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuos
-/// memory data layout. See also [this](https://stackoverflow.com/questions/17259877/1d-or-2d-array-whats-faster)
-/// explanation of why you should probably use a one-dimensional array approach.
-///
-/// Note that this crate uses a [*row-major*](https://eli.thegreenplace.net/2015/memory-layout-of-multi-dimensional-arrays) memory layout.
-/// Therefore, `grid.push_row()` is way faster then the `grid.push_col()` operation.
-///
-/// This crate will always provide a 2D data structure. If you need three or more dimensions take a look at the
-/// [ndarray crate](https://docs.rs/ndarray/0.13.0/ndarray/). The `grid` create is a container for all kind of data.
-/// If you need to perform matrix operations, you are better of with a linear algebra lib, such as
-/// [cgmath](https://docs.rs/cgmath/0.17.0/cgmath/) or [nalgebra](https://docs.rs/nalgebra/0.21.0/nalgebra/).
-///
-/// No other dependencies except for the std lib are used.
-///
-/// Most of the functions `std::Vec<T>` offer are also implemented in `grid` and slightly modified for a 2D data object.
-///
-/// # Examples
-///
-/// ```
-/// use grid::*;
-/// let mut grid = grid![[1,2,3]
-///                      [4,5,6]];
-/// assert_eq!(grid, Grid::from_vec(vec![1,2,3,4,5,6],3));
-/// assert_eq!(grid.get(0,2), Some(&3));
-/// assert_eq!(grid[1][1], 5);
-/// assert_eq!(grid.size(), (2,3));
-/// grid.push_row(vec![7,8,9]);
-/// assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
-/// ```
 use std::fmt;
 use std::iter::StepBy;
 use std::ops::Index;
