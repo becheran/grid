@@ -20,6 +20,20 @@ use std::cmp::Eq;
 /// No other dependencies except for the std lib are used.
 ///
 /// Most of the functions `std::Vec<T>` offer are also implemented in `grid` and slightly modified for a 2D data object.
+///
+/// # Examples
+///
+/// ```
+/// use grid::*;
+/// let mut grid = grid![[1,2,3]
+///                      [4,5,6]];
+/// assert_eq!(grid, Grid::from_vec(vec![1,2,3,4,5,6],3));
+/// assert_eq!(grid.get(0,2), Some(&3));
+/// assert_eq!(grid[1][1], 5);
+/// assert_eq!(grid.size(), (2,3));
+/// grid.push_row(vec![7,8,9]);
+/// assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
+/// ```
 use std::fmt;
 use std::iter::StepBy;
 use std::ops::Index;
