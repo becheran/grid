@@ -3,7 +3,7 @@ use grid::grid;
 use grid::Grid;
 use rand::Rng;
 
-const SIZE: usize = 1000;
+const SIZE: usize = 100;
 
 fn init_vec_vec() -> Vec<Vec<u32>> {
     vec![vec![0; SIZE]; SIZE]
@@ -51,7 +51,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             ]
         })
     });
-    c.bench_function("Macro init grid from_vec", |b| {
+    c.bench_function("Init grid from_vec", |b| {
         b.iter(|| {
             let vec = vec![
                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7,
