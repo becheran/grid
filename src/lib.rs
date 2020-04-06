@@ -496,6 +496,26 @@ impl<T: Clone> Grid<T> {
         self.cols += 1;
         self.rows = input_col_len;
     }
+
+    /// Removes the last row from a grid and returns it, or None if it is empty.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// assert_eq![grid.pop_row(), Some(vec![4,5,6])];
+    /// assert_eq![grid.pop_row(), Some(vec![1,2,3])];
+    /// assert_eq![grid.pop_row(), None];
+    /// ```
+    pub fn pop_row(&mut self) -> Option<Vec<T>> {
+        if self.rows > 0 {
+            let row = self.data.split_off((self.rows - 1) * self.cols);
+            self.rows -= 1;
+            return Some(row);
+        } else {
+            return None;
+        }
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -554,6 +574,21 @@ impl<T: Eq> Eq for Grid<T> {}
 #[cfg(test)]
 mod test {
     use super::*;
+    #[test]
+    fn pop() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        assert_eq!(grid.pop_row(), Some(vec![3, 4]));
+        assert_ne!(grid.size(), (1, 4));
+        assert_eq!(grid.pop_row(), Some(vec![1, 2]));
+        assert_ne!(grid.size(), (0, 0));
+        assert_eq!(grid.pop_row(), None);
+    }
+
+    #[test]
+    fn pop_row_empty() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![], 0);
+        assert_eq!(grid.pop_row(), None);
+    }
 
     #[test]
     fn ne_full_empty() {
