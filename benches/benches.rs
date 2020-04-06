@@ -109,6 +109,16 @@ fn criterion_benchmark(c: &mut Criterion) {
         let mut gird = init_grid();
         b.iter(|| gird[rand()][rand()] = rand_u32())
     });
+
+    // Push
+    c.bench_function("Push row grid", |b| {
+        let mut grid = init_grid();
+        b.iter(|| grid.push_row(vec![10; SIZE]))
+    });
+    c.bench_function("Push col grid", |b| {
+        let mut gird = init_grid();
+        b.iter(|| gird.push_col(vec![10; SIZE]))
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

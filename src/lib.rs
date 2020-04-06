@@ -1,3 +1,24 @@
+/// # Two Dimensional Grid
+/// 
+/// The grid crate provides a basic 2D dynamic data structure. 
+/// The purpose of this crate is to provide an universal data structure that is faster,
+/// uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution. 
+/// 
+/// Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuos 
+/// memory data layout. See also [this](https://stackoverflow.com/questions/17259877/1d-or-2d-array-whats-faster)
+/// explanation of why you should probably use a one-dimensional array approach.
+/// 
+/// Note that this crate uses a [*row-major*](https://eli.thegreenplace.net/2015/memory-layout-of-multi-dimensional-arrays) memory layout.
+/// Therefore, `grid.push_row()` is way faster then the `grid.push_col()` operation.
+/// 
+/// This crate will always provide a 2D data structure. If you need three or more dimensions take a look at the
+/// [ndarray crate](https://docs.rs/ndarray/0.13.0/ndarray/). The `grid` create is a container for all kind of data.
+/// If you need to perform matrix operations, you are better of with a linear algebra lib, such as 
+/// [cgmath](https://docs.rs/cgmath/0.17.0/cgmath/) or [nalgebra](https://docs.rs/nalgebra/0.21.0/nalgebra/).
+/// 
+/// No other dependencies except for the std lib are used.
+/// 
+/// Most of the functions `std::Vec<T>` offer are also implemented in `grid` and slightly modified for a 2D data object. 
 use std::fmt;
 use std::iter::StepBy;
 use std::ops::Index;
@@ -140,6 +161,7 @@ impl<T: Clone> Grid<T> {
     /// Returns a reference to an element, without performing bound checks.
     /// Generally not recommended, use with caution!
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
+    #[inline]
     pub unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
         self.data.get_unchecked(row * self.cols() + col)
     }
@@ -147,6 +169,7 @@ impl<T: Clone> Grid<T> {
     /// Returns a mutable reference to an element, without performing bound checks.
     /// Generally not recommended, use with caution!
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
+    #[inline]
     pub unsafe fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
         let cols = self.cols;
         self.data.get_unchecked_mut(row * cols + col)
@@ -391,6 +414,11 @@ impl<T: Clone> Grid<T> {
 
     /// Add a new column to the grid.
     ///
+    /// *Important:*
+    /// Please note that `Grid` uses a Row-Major memory layout. Therefore, the `push_col()`
+    /// operation requires quite a lot of memory shifting and will be significantly slower compared
+    /// to a `push_row()` operation.
+    /// 
     /// # Examples
     ///
     /// ```
@@ -424,9 +452,10 @@ impl<T: Clone> Grid<T> {
                 self.rows, input_col_len
             )
         }
+        self.data.reserve(col.len());
         for (idx, d) in col.iter().enumerate() {
-            self.data
-                .insert((idx * self.cols) + self.cols + idx, d.to_owned());
+            let vec_idx = (idx + 1) * self.cols + idx;
+            self.data.insert(vec_idx, d.to_owned());
         }
         self.cols += 1;
         self.rows = input_col_len;
@@ -481,6 +510,52 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    #[should_panic]
+    fn idx_out_of_col_bounds() {
+        let grid: Grid<char> = grid![['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']];
+        let _ = grid[0][5];
+    }
+
+    #[test]
+    fn push_col_small() {
+        let mut grid: Grid<u8> = grid![  
+                    [0, 1, 2]
+                    [10, 11, 12]];
+        grid.push_col(vec![3, 13]);
+        assert_eq!(grid.size(), (2, 4));
+        assert_eq!(
+            grid.iter_row(0).map(|x| *x).collect::<Vec<_>>(),
+            vec![0, 1, 2, 3]
+        );
+        assert_eq!(
+            grid.iter_row(1).map(|x| *x).collect::<Vec<_>>(),
+            vec![10, 11, 12, 13]
+        );
+    }
+
+    #[test]
+    fn push_col() {
+        let mut grid: Grid<char> = grid![  
+                    ['a', 'b', 'c', 'd']
+                    ['a', 'b', 'c', 'd']
+                    ['a', 'b', 'c', 'd']];
+        grid.push_col(vec!['x', 'y', 'z']);
+        assert_eq!(grid.size(), (3, 5));
+        assert_eq!(
+            grid.iter_row(0).map(|x| *x).collect::<Vec<_>>(),
+            vec!['a', 'b', 'c', 'd', 'x']
+        );
+        assert_eq!(
+            grid.iter_row(1).map(|x| *x).collect::<Vec<_>>(),
+            vec!['a', 'b', 'c', 'd', 'y']
+        );
+        assert_eq!(
+            grid.iter_row(2).map(|x| *x).collect::<Vec<_>>(),
+            vec!['a', 'b', 'c', 'd', 'z']
+        );
+    }
 
     #[test]
     fn push_col_single() {
