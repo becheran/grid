@@ -9,3 +9,7 @@ Data structure grid for rust. Provide a two dimensional data storage that is eas
 
 - [documentation](https://docs.rs/grid/)
 - [library on crates.io](https://crates.io/crates/grid)
+
+## :construction: Under Construction :construction:
+
+Not all features are implemented yet. Though, major API changes are not very likely.
