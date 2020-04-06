@@ -199,7 +199,7 @@ impl<T: Clone> Grid<T> {
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     pub unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
-        self.data.get_unchecked(row * self.cols() + col)
+        self.data.get_unchecked(row * self.cols + col)
     }
 
     /// Returns a mutable reference to an element, without performing bound checks.
@@ -511,7 +511,42 @@ impl<T: Clone> Grid<T> {
         if self.rows > 0 {
             let row = self.data.split_off((self.rows - 1) * self.cols);
             self.rows -= 1;
+            if self.rows == 0 {
+                self.cols = 0;
+            }
             return Some(row);
+        } else {
+            return None;
+        }
+    }
+
+    /// Removes the last column from a grid and returns it, or None if it is empty.
+    ///
+    /// Note that this operation is much slower than the `pop_row()` because the memory layout
+    /// of `Grid` is row-major and removing a column requires a lot of move operations.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// assert_eq![grid.pop_col(), Some(vec![3,6])];
+    /// assert_eq![grid.pop_col(), Some(vec![2,5])];
+    /// assert_eq![grid.pop_col(), Some(vec![1,4])];
+    /// assert_eq![grid.pop_col(), None];
+    /// ```
+    pub fn pop_col(&mut self) -> Option<Vec<T>> {
+        if self.cols > 0 {
+            let mut col = Vec::with_capacity(self.rows);
+            for i in 0..self.rows {
+                let idx = i * self.cols + self.cols - 1 - i;
+                println!["{:?}", idx];
+                col.push(self.data.remove(idx));
+            }
+            self.cols -= 1;
+            if self.cols == 0 {
+                self.rows = 0;
+            }
+            return Some(col);
         } else {
             return None;
         }
@@ -574,13 +609,30 @@ impl<T: Eq> Eq for Grid<T> {}
 #[cfg(test)]
 mod test {
     use super::*;
+
     #[test]
-    fn pop() {
+    fn pop_col() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        assert_eq!(grid.pop_col(), Some(vec![2, 4]));
+        assert_eq!(grid.size(), (2, 1));
+        assert_eq!(grid.pop_col(), Some(vec![1, 3]));
+        assert_eq!(grid.size(), (0, 0));
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_empty() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![], 0);
+        assert_eq!(grid.pop_row(), None);
+    }
+
+    #[test]
+    fn pop_row() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         assert_eq!(grid.pop_row(), Some(vec![3, 4]));
         assert_ne!(grid.size(), (1, 4));
         assert_eq!(grid.pop_row(), Some(vec![1, 2]));
-        assert_ne!(grid.size(), (0, 0));
+        assert_eq!(grid.size(), (0, 0));
         assert_eq!(grid.pop_row(), None);
     }
 
