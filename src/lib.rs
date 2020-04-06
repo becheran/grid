@@ -1,4 +1,4 @@
-/*! 
+/*!
 # Two Dimensional Grid
 Continuos growable 2D data structure.
 The purpose of this crate is to provide an universal data structure that is faster,
@@ -38,13 +38,6 @@ use std::ops::IndexMut;
 use std::slice::Iter;
 use std::slice::IterMut;
 
-/// Stores elements of a certain type in a 2D grid structure.
-pub struct Grid<T> {
-    data: Vec<T>,
-    cols: usize,
-    rows: usize,
-}
-
 #[doc(hidden)]
 #[macro_export]
 macro_rules! count {
@@ -53,12 +46,31 @@ macro_rules! count {
 }
 
 /// Init a grid with values.
+///
+/// Each array within `[]` represents a row starting from top to button.
+///
+/// # Examples
+///
+/// In this example a grid of numbers from 1 to 9 is created:
+///
+///  
 /// ```
 /// use grid::grid;
 /// let grid = grid![[1, 2, 3]
 /// [4, 5, 6]
 /// [7, 8, 9]];
 /// assert_eq!(grid.size(), (3, 3))
+/// ```
+///
+/// # Examples
+///
+/// Not that each row must be of the same length. The following example will not compile:  
+///  
+/// ``` ignore
+/// use grid::grid;
+/// let grid = grid![[1, 2, 3]
+/// [4, 5] // This does not work!
+/// [7, 8, 9]];
 /// ```
 #[macro_export]
 macro_rules! grid {
@@ -90,6 +102,18 @@ macro_rules! grid {
             $crate::Grid::from_vec(vec, cols)
         }
     };
+}
+
+/// Stores elements of a certain type in a 2D grid structure.
+///
+/// Uses a rust `Vec<T>` type to reference the grid data on the heap.
+/// Also the number of rows and columns are stored in the grid data structure.
+///
+/// The grid data is stored in a row-major memory layout.
+pub struct Grid<T> {
+    data: Vec<T>,
+    cols: usize,
+    rows: usize,
 }
 
 impl<T: Clone> Grid<T> {
