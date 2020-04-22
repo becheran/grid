@@ -551,6 +551,27 @@ impl<T: Clone> Grid<T> {
             return None;
         }
     }
+
+    /// Insert a new row at the index and shifts all rows after down.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.insert_row(1, vec![7,8,9]);
+    /// assert_eq!(grid[0], [1,2,3]);
+    /// assert_eq!(grid[1], [7,8,9]);
+    /// assert_eq!(grid[2], [4,5,6]);
+    /// assert_eq!(grid.size(), (3,3))
+    /// ```
+    pub fn insert_row(&mut self, index: usize, row: Vec<T>) {
+        if row.len() != self.cols() {
+            panic!("Inserted row must be of length {}, but was {}.", self.cols(), row.len());
+        }
+        self.rows += 1;
+        let data_idx = index * self.cols;
+        self.data.splice(data_idx..data_idx, row.iter().cloned());
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -609,6 +630,37 @@ impl<T: Eq> Eq for Grid<T> {}
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn insert_row_at_end() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        grid.insert_row(2, vec![5, 6]);
+        assert_eq!(grid[0], [1 ,2]);
+        assert_eq!(grid[1], [3 ,4]);
+        assert_eq!(grid[2], [5 ,6]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn insert_row_out_of_idx() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        grid.insert_row(3, vec![4, 5]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn insert_row_wrong_size_of_idx() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        grid.insert_row(1, vec![4, 5, 4]);
+    }
+
+    #[test]
+    fn insert_row_start() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        let new_row = [5, 6];
+        grid.insert_row(1, new_row.to_vec());
+        assert_eq!(grid[1], new_row);
+    }
 
     #[test]
     fn pop_col() {
