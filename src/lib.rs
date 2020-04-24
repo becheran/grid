@@ -565,12 +565,43 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(grid.size(), (3,3))
     /// ```
     pub fn insert_row(&mut self, index: usize, row: Vec<T>) {
-        if row.len() != self.cols() {
-            panic!("Inserted row must be of length {}, but was {}.", self.cols(), row.len());
+        if row.len() != self.cols {
+            panic!("Inserted row must be of length {}, but was {}.", self.cols, row.len());
+        }
+        if index > self.rows {
+            panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.cols);
         }
         self.rows += 1;
         let data_idx = index * self.cols;
         self.data.splice(data_idx..data_idx, row.iter().cloned());
+    }
+
+    /// Insert a new column at the index.
+    /// 
+    /// Important! Insertion of columns is a lot slower than the lines insertion.
+    /// This is because of the memory layout of the grid data structure. 
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.insert_col(1, vec![9,9]);
+    /// assert_eq!(grid[0], [1,9,2,3]);
+    /// assert_eq!(grid[1], [4,9,5,6]);
+    /// assert_eq!(grid.size(), (2,4))
+    /// ```
+    pub fn insert_col(&mut self, index: usize, col: Vec<T>) {
+        if col.len() != self.rows {
+            panic!("Inserted col must be of length {}, but was {}.", self.rows, col.len());
+        }
+        if index > self.cols {
+            panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.rows);
+        }
+        for (row_iter, col_val) in col.iter().enumerate() {
+            let data_idx = row_iter * self.cols + index + row_iter;
+            self.data.insert(data_idx, col_val.clone());
+        }
+        self.cols += 1;
     }
 }
 
@@ -630,6 +661,22 @@ impl<T: Eq> Eq for Grid<T> {}
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn insert_col_at_end() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        grid.insert_col(2, vec![5, 6]);
+        assert_eq!(grid[0], [1 ,2, 5]);
+        assert_eq!(grid[1], [3 ,4, 6]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn insert_col_out_of_idx() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        grid.insert_col(3, vec![4, 5]);
+    }
+
 
     #[test]
     fn insert_row_at_end() {
