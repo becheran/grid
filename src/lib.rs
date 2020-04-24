@@ -603,6 +603,22 @@ impl<T: Clone> Grid<T> {
         }
         self.cols += 1;
     }
+    
+    /// Returns a reference to the internal data structure of the grid.
+    ///
+    /// Grid uses a row major layout.
+    /// All rows are placed right after each other in the vector data structure.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let grid = grid![[1,2,3][4,5,6]];
+    /// let flat = grid.flatten();
+    /// assert_eq!(flat, &vec![1,2,3,4,5,6]);
+    /// ```
+    pub fn flatten(&self) -> &Vec<T> {
+        return &self.data
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
