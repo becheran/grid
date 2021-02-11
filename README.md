@@ -1,5 +1,6 @@
 # Grid
 
+[![](https://docs.rs/grid/badge.svg)](https://docs.rs/grid)
 [![](http://meritbadge.herokuapp.com/grid)](https://crates.io/crates/grid)
 [![](https://badgen.net/crates/d/grid)](https://crates.io/crates/grid)
 [![Build Status](https://gitlab.com/becheran/grid_ci/badges/master/pipeline.svg)](https://gitlab.com/becheran/grid_ci/pipelines)
