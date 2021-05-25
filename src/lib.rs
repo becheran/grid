@@ -617,7 +617,12 @@ impl<T: Clone> Grid<T> {
     /// assert_eq!(flat, &vec![1,2,3,4,5,6]);
     /// ```
     pub fn flatten(&self) -> &Vec<T> {
-        return &self.data
+        &self.data
+    }
+
+    /// Converts self into a vector without clones or allocation.
+    pub fn into_vec(self) -> Vec<T> {
+        self.data
     }
 }
 
@@ -682,8 +687,8 @@ mod test {
     fn insert_col_at_end() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         grid.insert_col(2, vec![5, 6]);
-        assert_eq!(grid[0], [1 ,2, 5]);
-        assert_eq!(grid[1], [3 ,4, 6]);
+        assert_eq!(grid[0], [1, 2, 5]);
+        assert_eq!(grid[1], [3, 4, 6]);
     }
 
     #[test]
@@ -693,14 +698,13 @@ mod test {
         grid.insert_col(3, vec![4, 5]);
     }
 
-
     #[test]
     fn insert_row_at_end() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         grid.insert_row(2, vec![5, 6]);
-        assert_eq!(grid[0], [1 ,2]);
-        assert_eq!(grid[1], [3 ,4]);
-        assert_eq!(grid[2], [5 ,6]);
+        assert_eq!(grid[0], [1, 2]);
+        assert_eq!(grid[1], [3, 4]);
+        assert_eq!(grid[2], [5, 6]);
     }
 
     #[test]
