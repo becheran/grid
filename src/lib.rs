@@ -624,6 +624,21 @@ impl<T: Clone> Grid<T> {
     pub fn into_vec(self) -> Vec<T> {
         self.data
     }
+
+    /// Transpose the grid so that columns become rows in new grid.
+    pub fn transpose(&self) -> Grid<T> {
+        let mut data = Vec::with_capacity(self.data.len());
+        for c in 0..self.cols {
+            for r in 0..self.rows {
+                data.push(self[r][c].clone());
+            }
+        }
+        Grid {
+            data,
+            cols: self.rows,
+            rows: self.cols,
+        }
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
