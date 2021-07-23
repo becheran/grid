@@ -1141,4 +1141,10 @@ mod test {
         let grid = Grid::init(1, 2, 3);
         assert_eq!(grid.size(), (1, 2));
     }
+
+    #[test]
+    fn transpose() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        assert_eq!(format!("{:?}", grid.transpose()), "[[1, 4][2, 5][3, 6]]");
+    }
 }
