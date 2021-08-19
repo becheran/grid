@@ -30,6 +30,14 @@ grid.push_row(vec![7,8,9]);
 assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
  ```
 */
+
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(not(feature = "std"))]
+extern crate no_std_compat as std;
+#[cfg(not(feature = "std"))]
+use std::prelude::v1::*;
+
 use std::cmp::Eq;
 use std::fmt;
 use std::iter::StepBy;
@@ -539,7 +547,6 @@ impl<T: Clone> Grid<T> {
             let mut col = Vec::with_capacity(self.rows);
             for i in 0..self.rows {
                 let idx = i * self.cols + self.cols - 1 - i;
-                println!["{:?}", idx];
                 col.push(self.data.remove(idx));
             }
             self.cols -= 1;
