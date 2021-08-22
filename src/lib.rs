@@ -170,8 +170,8 @@ impl<T: Clone> Grid<T> {
     /// ```
     ///
     /// will create a grid with the following layout:
-    /// [1,2,3]
-    /// [4,5,6]
+    /// \[1,2,3\]
+    /// \[4,5,6\]
     ///
     /// This example will fail, because `vec.len()` is not a multiple of `cols`:
     ///
