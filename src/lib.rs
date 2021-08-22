@@ -141,8 +141,8 @@ impl<T: Clone> Grid<T> {
         }
         Grid {
             data: vec![T::default(); rows * cols],
-            cols: cols,
-            rows: rows,
+            cols,
+            rows,
         }
     }
 
@@ -153,8 +153,8 @@ impl<T: Clone> Grid<T> {
         }
         Grid {
             data: vec![data; rows * cols],
-            cols: cols,
-            rows: rows,
+            cols,
+            rows,
         }
     }
 
@@ -183,11 +183,11 @@ impl<T: Clone> Grid<T> {
         let rows = vec.len();
         if rows == 0 {
             if cols == 0 {
-                return Grid {
+                Grid {
                     data: vec![],
                     rows: 0,
                     cols: 0,
-                };
+                }
             } else {
                 panic!("Vector length is zero, but cols is {:?}", cols);
             }
@@ -197,13 +197,16 @@ impl<T: Clone> Grid<T> {
             Grid {
                 data: vec,
                 rows: rows / cols,
-                cols: cols,
+                cols,
             }
         }
     }
 
     /// Returns a reference to an element, without performing bound checks.
     /// Generally not recommended, use with caution!
+    ///
+    /// # Safety
+    ///
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     pub unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
@@ -212,6 +215,9 @@ impl<T: Clone> Grid<T> {
 
     /// Returns a mutable reference to an element, without performing bound checks.
     /// Generally not recommended, use with caution!
+    ///
+    /// # Safety
+    /// 
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     pub unsafe fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
@@ -377,7 +383,7 @@ impl<T: Clone> Grid<T> {
     pub fn iter_row(&self, row: usize) -> Iter<T> {
         if row < self.rows {
             let start = row * self.cols;
-            return self.data[start..(start + self.cols)].iter();
+            self.data[start..(start + self.cols)].iter()
         } else {
             panic!(
                 "out of bounds. Row must be less than {:?}, but is {:?}.",
@@ -406,7 +412,7 @@ impl<T: Clone> Grid<T> {
         if row < self.rows {
             let cols = self.cols;
             let start = row * cols;
-            return self.data[start..(start + cols)].iter_mut();
+            self.data[start..(start + cols)].iter_mut()
         } else {
             panic!(
                 "out of bounds. Row must be less than {:?}, but is {:?}.",
@@ -522,9 +528,9 @@ impl<T: Clone> Grid<T> {
             if self.rows == 0 {
                 self.cols = 0;
             }
-            return Some(row);
+            Some(row)
         } else {
-            return None;
+            None
         }
     }
 
@@ -553,9 +559,9 @@ impl<T: Clone> Grid<T> {
             if self.cols == 0 {
                 self.rows = 0;
             }
-            return Some(col);
+            Some(col)
         } else {
-            return None;
+            None
         }
     }
 
@@ -676,7 +682,7 @@ impl<T: Clone> Index<usize> for Grid<T> {
 
 impl<T: Clone> IndexMut<usize> for Grid<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.data[(idx * &self.cols)..]
+        &mut self.data[(idx * self.cols)..]
     }
 }
 
@@ -832,11 +838,11 @@ mod test {
         grid.push_col(vec![3, 13]);
         assert_eq!(grid.size(), (2, 4));
         assert_eq!(
-            grid.iter_row(0).map(|x| *x).collect::<Vec<_>>(),
+            grid.iter_row(0).copied().collect::<Vec<_>>(),
             vec![0, 1, 2, 3]
         );
         assert_eq!(
-            grid.iter_row(1).map(|x| *x).collect::<Vec<_>>(),
+            grid.iter_row(1).copied().collect::<Vec<_>>(),
             vec![10, 11, 12, 13]
         );
     }
@@ -850,15 +856,15 @@ mod test {
         grid.push_col(vec!['x', 'y', 'z']);
         assert_eq!(grid.size(), (3, 5));
         assert_eq!(
-            grid.iter_row(0).map(|x| *x).collect::<Vec<_>>(),
+            grid.iter_row(0).copied().collect::<Vec<_>>(),
             vec!['a', 'b', 'c', 'd', 'x']
         );
         assert_eq!(
-            grid.iter_row(1).map(|x| *x).collect::<Vec<_>>(),
+            grid.iter_row(1).copied().collect::<Vec<_>>(),
             vec!['a', 'b', 'c', 'd', 'y']
         );
         assert_eq!(
-            grid.iter_row(2).map(|x| *x).collect::<Vec<_>>(),
+            grid.iter_row(2).copied().collect::<Vec<_>>(),
             vec!['a', 'b', 'c', 'd', 'z']
         );
     }
