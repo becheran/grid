@@ -8,6 +8,7 @@ build-rust-latest:
     script:
         - cargo build --verbose
         - cargo test --verbose
+        - cargo test --no-default-features --verbose
 
 build-rust-nightly:
     stage: build
@@ -15,3 +16,4 @@ build-rust-nightly:
     script:
         - cargo build --verbose
         - cargo test --verbose
+        - cargo test --no-default-features --verbose
