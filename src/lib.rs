@@ -124,7 +124,7 @@ pub struct Grid<T> {
     rows: usize,
 }
 
-impl<T: Clone> Grid<T> {
+impl<T> Grid<T> {
     /// Init a grid of size rows x columns with default values of the given type.
     /// For example this will generate a 2x3 grid of zeros:
     /// ```
@@ -139,15 +139,16 @@ impl<T: Clone> Grid<T> {
         if rows < 1 || cols < 1 {
             panic!("Grid size of rows and columns must be greater than zero.");
         }
-        Grid {
-            data: vec![T::default(); rows * cols],
-            cols,
-            rows,
-        }
+        let mut data = Vec::new();
+        data.resize_with(rows * cols, T::default);
+        Grid { data, cols, rows }
     }
 
     /// Init a grid of size rows x columns with the given data element.
-    pub fn init(rows: usize, cols: usize, data: T) -> Grid<T> {
+    pub fn init(rows: usize, cols: usize, data: T) -> Grid<T>
+    where
+        T: Clone,
+    {
         if rows < 1 || cols < 1 {
             panic!("Grid size of rows and columns must be greater than zero.");
         }
@@ -503,9 +504,9 @@ impl<T: Clone> Grid<T> {
             )
         }
         self.data.reserve(col.len());
-        for (idx, d) in col.iter().enumerate() {
+        for (idx, d) in col.into_iter().enumerate() {
             let vec_idx = (idx + 1) * self.cols + idx;
-            self.data.insert(vec_idx, d.to_owned());
+            self.data.insert(vec_idx, d);
         }
         self.cols += 1;
         self.rows = input_col_len;
@@ -586,7 +587,7 @@ impl<T: Clone> Grid<T> {
         }
         self.rows += 1;
         let data_idx = index * self.cols;
-        self.data.splice(data_idx..data_idx, row.iter().cloned());
+        self.data.splice(data_idx..data_idx, row.into_iter());
     }
 
     /// Insert a new column at the index.
@@ -610,9 +611,9 @@ impl<T: Clone> Grid<T> {
         if index > self.cols {
             panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.rows);
         }
-        for (row_iter, col_val) in col.iter().enumerate() {
+        for (row_iter, col_val) in col.into_iter().enumerate() {
             let data_idx = row_iter * self.cols + index + row_iter;
-            self.data.insert(data_idx, col_val.clone());
+            self.data.insert(data_idx, col_val);
         }
         self.cols += 1;
     }
@@ -639,7 +640,10 @@ impl<T: Clone> Grid<T> {
     }
 
     /// Transpose the grid so that columns become rows in new grid.
-    pub fn transpose(&self) -> Grid<T> {
+    pub fn transpose(&self) -> Grid<T>
+    where
+        T: Clone,
+    {
         let mut data = Vec::with_capacity(self.data.len());
         for c in 0..self.cols {
             for r in 0..self.rows {
@@ -664,7 +668,7 @@ impl<T: Clone> Clone for Grid<T> {
     }
 }
 
-impl<T: Clone> Index<usize> for Grid<T> {
+impl<T> Index<usize> for Grid<T> {
     type Output = [T];
 
     fn index(&self, idx: usize) -> &Self::Output {
@@ -680,7 +684,7 @@ impl<T: Clone> Index<usize> for Grid<T> {
     }
 }
 
-impl<T: Clone> IndexMut<usize> for Grid<T> {
+impl<T> IndexMut<usize> for Grid<T> {
     fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
         &mut self.data[(idx * self.cols)..]
     }
