@@ -1,10 +1,10 @@
 /*!
 # Two Dimensional Grid
-Continuos growable 2D data structure.
+Continuous growable 2D data structure.
 The purpose of this crate is to provide an universal data structure that is faster,
 uses less memory, and is easier to use than a naive `Vec<Vec<T>>` solution.
 
-Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuos
+Similar to *C-like* arrays `grid` uses a flat 1D `Vec<T>` data structure to have a continuous
 memory data layout. See also [this](https://stackoverflow.com/questions/17259877/1d-or-2d-array-whats-faster)
 explanation of why you should probably use a one-dimensional array approach.
 
