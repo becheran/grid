@@ -656,6 +656,49 @@ impl<T> Grid<T> {
             rows: self.cols,
         }
     }
+
+    /// Fills the grid with elements by cloning `value`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.fill(7);
+    /// assert_eq!(grid[0], [7,7,7]);
+    /// assert_eq!(grid[1], [7,7,7]);
+    /// ```
+    pub fn fill(&mut self, value: T)
+        where
+            T: Clone 
+    {
+        self.data.fill(value)
+    }
+
+    /// Fills the grid with elements returned by calling a closure repeatedly.
+    ///
+    /// This method uses a closure to create new values. If you'd rather
+    /// [`Clone`] a given value, use [`fill`]. If you want to use the [`Default`]
+    /// trait to generate values, you can pass [`Default::default`] as the
+    /// argument.
+    ///
+    /// [`fill`]: Grid::fill
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// grid.fill_with(Default::default);
+    /// assert_eq!(grid[0], [0,0,0]);
+    /// assert_eq!(grid[1], [0,0,0]);
+    /// ```
+    pub fn fill_with<F>(&mut self, f: F)
+        where
+            F: FnMut() -> T,
+    {
+        self.data.fill_with(f)
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -1163,5 +1206,21 @@ mod test {
     fn transpose() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         assert_eq!(format!("{:?}", grid.transpose()), "[[1, 4][2, 5][3, 6]]");
+    }
+
+    #[test]
+    fn fill() {
+        let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        grid.fill(7);
+        assert_eq!(grid[0], [7,7,7]);
+        assert_eq!(grid[1], [7,7,7]);
+    }
+
+    #[test]
+    fn fill_with() {
+        let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        grid.fill_with(Default::default);
+        assert_eq!(grid[0], [0,0,0]);
+        assert_eq!(grid[1], [0,0,0]);
     }
 }
