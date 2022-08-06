@@ -19,7 +19,7 @@ fn init_grid() -> Grid<u32> {
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand::thread_rng();
-    let mut rand = || rng.gen_range(0, SIZE);
+    let mut rand = || rng.gen_range(0..SIZE);
 
     let mut rng_u32 = rand::thread_rng();
     let mut rand_u32 = || rng_u32.gen::<u32>();
