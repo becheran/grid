@@ -467,8 +467,7 @@ impl<T> Grid<T> {
     ///
     /// *Important:*
     /// Please note that `Grid` uses a Row-Major memory layout. Therefore, the `push_col()`
-    /// operation requires quite a lot of memory shifting and will be significantly slower compared
-    /// to a `push_row()` operation.
+    /// operation will be significantly slower compared to a `push_row()` operation.
     ///
     /// # Examples
     ///
@@ -503,10 +502,10 @@ impl<T> Grid<T> {
                 self.rows, input_col_len
             )
         }
-        self.data.reserve(col.len());
-        for (idx, d) in col.into_iter().enumerate() {
-            let vec_idx = (idx + 1) * self.cols + idx;
-            self.data.insert(vec_idx, d);
+        self.data.extend(col);
+        for i in (1..self.rows).rev() {
+            let row_idx = i * self.cols; 
+            self.data[row_idx..row_idx+self.cols+i].rotate_right(i);
         }
         self.cols += 1;
         self.rows = input_col_len;
