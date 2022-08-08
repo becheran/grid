@@ -1178,14 +1178,14 @@ mod test {
     #[should_panic]
     fn idx_panic_1() {
         let grid = Grid::init(1, 2, 3);
-        grid[20][0];
+        let _ = grid[20][0];
     }
 
     #[test]
     #[should_panic]
     fn idx_panic_2() {
         let grid = Grid::init(1, 2, 3);
-        grid[0][20];
+        let _ = grid[0][20];
     }
 
     #[test]
