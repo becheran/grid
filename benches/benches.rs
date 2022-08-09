@@ -14,7 +14,11 @@ fn init_vec_flat() -> Vec<u32> {
 }
 
 fn init_grid() -> Grid<u32> {
-    Grid::init(SIZE, SIZE, 0)
+    let mut grid = Grid::init(SIZE, SIZE, 0);
+    for (idx, val) in grid.iter_mut().enumerate() {
+        *val += idx as u32;
+    }
+    grid
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -78,9 +82,9 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     // New
-    c.bench_function("vecvec_init", |b| b.iter(init_vec_vec));
+    c.bench_function("vecvec_init", |b| b.iter(|| vec![vec![0; SIZE]; SIZE]));
     c.bench_function("flatvec_init", |b| b.iter(init_vec_flat));
-    c.bench_function("grid_init", |b| b.iter(init_grid));
+    c.bench_function("grid_init", |b| b.iter(|| Grid::init(SIZE, SIZE, 0)));
 
     // Get
     c.bench_function("vecvec_idx", |b| {
@@ -112,22 +116,38 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     // Push
     c.bench_function("grid_push_row", |b| {
-        let mut grid = init_grid();
-        b.iter(|| grid.push_row(vec![0; SIZE]))
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.push_row(vec![0; SIZE]),
+            criterion::BatchSize::SmallInput,
+        )
     });
     c.bench_function("grid_push_col", |b| {
-        let mut gird = init_grid();
-        b.iter(|| gird.push_col(vec![0; SIZE]))
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.push_col(vec![0; SIZE]),
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     // Pop
     c.bench_function("grid_pop_row", |b| {
-        let mut grid = init_grid();
-        b.iter(|| grid.pop_row())
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.pop_row(),
+            criterion::BatchSize::SmallInput,
+        )
     });
     c.bench_function("grid_pop_col", |b| {
-        let mut gird = init_grid();
-        b.iter(|| gird.pop_col())
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.pop_col(),
+            criterion::BatchSize::SmallInput,
+        )
     });
 }
 
