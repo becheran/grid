@@ -451,16 +451,17 @@ impl<T> Grid<T> {
     ///
     /// Panics if the grid is not empty and `row.len() != grid.cols()`.
     pub fn push_row(&mut self, row: Vec<T>) {
-        let input_row_len = row.len();
-        if self.rows > 0 && input_row_len != self.cols {
+        if self.rows > 0 && row.len() != self.cols {
             panic!(
                 "pushed row does not match. Length must be {:?}, but was {:?}.",
-                self.cols, input_row_len
+                self.cols, row.len()
             )
         }
         self.data.extend(row);
         self.rows += 1;
-        self.cols = input_row_len;
+        if self.cols == 0{
+            self.cols = self.data.len();
+        }
     }
 
     /// Add a new column to the grid.
@@ -495,11 +496,10 @@ impl<T> Grid<T> {
     ///
     /// Panics if the grid is not empty and `col.len() != grid.rows()`.
     pub fn push_col(&mut self, col: Vec<T>) {
-        let input_col_len = col.len();
-        if self.cols > 0 && input_col_len != self.rows {
+        if self.cols > 0 && col.len() != self.rows {
             panic!(
                 "pushed column does not match. Length must be {:?}, but was {:?}.",
-                self.rows, input_col_len
+                self.rows, col.len()
             )
         }
         self.data.extend(col);
@@ -508,7 +508,9 @@ impl<T> Grid<T> {
             self.data[row_idx..row_idx+self.cols+i].rotate_right(i);
         }
         self.cols += 1;
-        self.rows = input_col_len;
+        if self.rows == 0{
+            self.rows = self.data.len();
+        }
     }
 
     /// Removes the last row from a grid and returns it, or None if it is empty.
@@ -522,16 +524,15 @@ impl<T> Grid<T> {
     /// assert_eq![grid.pop_row(), None];
     /// ```
     pub fn pop_row(&mut self) -> Option<Vec<T>> {
-        if self.rows > 0 {
-            let row = self.data.split_off((self.rows - 1) * self.cols);
-            self.rows -= 1;
-            if self.rows == 0 {
-                self.cols = 0;
-            }
-            Some(row)
-        } else {
-            None
+        if self.rows == 0 {
+            return None
         }
+        let row = self.data.split_off((self.rows - 1) * self.cols);
+        self.rows -= 1;
+        if self.rows == 0 {
+            self.cols = 0;
+        }
+        Some(row)
     }
 
     /// Removes the last column from a grid and returns it, or None if it is empty.
@@ -549,20 +550,19 @@ impl<T> Grid<T> {
     /// assert_eq![grid.pop_col(), None];
     /// ```
     pub fn pop_col(&mut self) -> Option<Vec<T>> {
-        if self.cols > 0 {
-            let mut col = Vec::with_capacity(self.rows);
-            for i in 0..self.rows {
-                let idx = i * self.cols + self.cols - 1 - i;
-                col.push(self.data.remove(idx));
-            }
-            self.cols -= 1;
-            if self.cols == 0 {
-                self.rows = 0;
-            }
-            Some(col)
-        } else {
-            None
+        if self.cols == 0 {
+            return None
         }
+        for i in 1..self.rows {
+            let row_idx = i * (self.cols - 1); 
+            self.data[row_idx..row_idx+self.cols+i-1].rotate_left(i);
+        }
+        let col = self.data.split_off(self.data.len() - self.rows);
+        self.cols -= 1;
+        if self.cols == 0 {
+            self.rows = 0;
+        }
+        Some(col)
     }
 
     /// Insert a new row at the index and shifts all rows after down.
@@ -809,6 +809,20 @@ mod test {
         assert_eq!(grid.pop_col(), Some(vec![2, 4]));
         assert_eq!(grid.size(), (2, 1));
         assert_eq!(grid.pop_col(), Some(vec![1, 3]));
+        assert_eq!(grid.size(), (0, 0));
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_large() {
+        let mut grid: Grid<u16> = Grid::from_vec(vec![1, 2, 3, 4, 11, 22, 33, 44, 111, 222, 333, 444], 4);
+        assert_eq!(grid.pop_col(), Some(vec![4, 44, 444]));
+        assert_eq!(grid.size(), (3, 3));
+        assert_eq!(grid.pop_col(), Some(vec![3, 33, 333]));
+        assert_eq!(grid.size(), (3, 2));
+        assert_eq!(grid.pop_col(), Some(vec![2, 22, 222]));
+        assert_eq!(grid.size(), (3, 1));
+        assert_eq!(grid.pop_col(), Some(vec![1, 11, 111]));
         assert_eq!(grid.size(), (0, 0));
         assert_eq!(grid.pop_col(), None);
     }
