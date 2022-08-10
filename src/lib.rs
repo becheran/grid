@@ -804,7 +804,27 @@ mod test {
     }
 
     #[test]
-    fn pop_col() {
+    fn pop_col_1x3() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 3);
+        assert_eq!(grid.pop_col(), Some(vec![3]));
+        assert_eq!(grid.size(), (1, 2));
+        assert_eq!(grid.pop_col(), Some(vec![2]));
+        assert_eq!(grid.size(), (1, 1));
+        assert_eq!(grid.pop_col(), Some(vec![1]));
+        assert!(grid.is_empty());
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_3x1() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 1);
+        assert_eq!(grid.pop_col(), Some(vec![1,2,3]));
+        assert!(grid.is_empty());
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_2x2() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         assert_eq!(grid.pop_col(), Some(vec![2, 4]));
         assert_eq!(grid.size(), (2, 1));
@@ -814,7 +834,7 @@ mod test {
     }
 
     #[test]
-    fn pop_col_large() {
+    fn pop_col_3x4() {
         let mut grid: Grid<u16> = Grid::from_vec(vec![1, 2, 3, 4, 11, 22, 33, 44, 111, 222, 333, 444], 4);
         assert_eq!(grid.pop_col(), Some(vec![4, 44, 444]));
         assert_eq!(grid.size(), (3, 3));
@@ -834,7 +854,7 @@ mod test {
     }
 
     #[test]
-    fn pop_row() {
+    fn pop_row_2x2() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         assert_eq!(grid.pop_row(), Some(vec![3, 4]));
         assert_ne!(grid.size(), (1, 4));
@@ -891,7 +911,7 @@ mod test {
     }
 
     #[test]
-    fn push_col_small() {
+    fn push_col_2x3() {
         let mut grid: Grid<u8> = grid![  
                     [0, 1, 2]
                     [10, 11, 12]];
@@ -908,7 +928,7 @@ mod test {
     }
 
     #[test]
-    fn push_col() {
+    fn push_col_3x4() {
         let mut grid: Grid<char> = grid![  
                     ['a', 'b', 'c', 'd']
                     ['a', 'b', 'c', 'd']
@@ -930,7 +950,7 @@ mod test {
     }
 
     #[test]
-    fn push_col_single() {
+    fn push_col_1x3() {
         let mut grid: Grid<char> = grid![['a', 'b', 'c']];
         grid.push_col(vec!['d']);
         assert_eq!(grid.size(), (1, 4));
@@ -1021,6 +1041,7 @@ mod test {
     #[test]
     fn clear() {
         let mut grid: Grid<u8> = grid![[1, 2, 3]];
+        assert!(!grid.is_empty());
         grid.clear();
         assert!(grid.is_empty());
     }
@@ -1032,9 +1053,13 @@ mod test {
     }
 
     #[test]
-    fn is_empty_true() {
-        let grid: Grid<u8> = grid![];
-        assert!(grid.is_empty());
+    fn is_empty() {
+        let mut g : Grid<u8> =grid![[]];
+        assert!(g.is_empty());
+        g = grid![];
+        assert!(g.is_empty());
+        g = Grid::from_vec(vec![], 0);
+        assert!(g.is_empty());
     }
 
     #[test]
@@ -1099,18 +1124,6 @@ mod test {
         assert_eq!(grid[0][0], 1);
         assert_eq!(grid[0][1], 2);
         assert_eq!(grid[0][2], 3);
-    }
-
-    #[test]
-    fn macro_init_empty() {
-        let grid: Grid<usize> = grid![];
-        assert_eq!(grid.size(), (0, 0));
-    }
-
-    #[test]
-    fn from_vec_zero() {
-        let grid: Grid<u8> = Grid::from_vec(vec![], 0);
-        assert_eq!(grid.size(), (0, 0));
     }
 
     #[test]
