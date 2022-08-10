@@ -451,24 +451,24 @@ impl<T> Grid<T> {
     ///
     /// Panics if the grid is not empty and `row.len() != grid.cols()`.
     pub fn push_row(&mut self, row: Vec<T>) {
-        let input_row_len = row.len();
-        if self.rows > 0 && input_row_len != self.cols {
+        if self.rows > 0 && row.len() != self.cols {
             panic!(
                 "pushed row does not match. Length must be {:?}, but was {:?}.",
-                self.cols, input_row_len
+                self.cols, row.len()
             )
         }
         self.data.extend(row);
         self.rows += 1;
-        self.cols = input_row_len;
+        if self.cols == 0{
+            self.cols = self.data.len();
+        }
     }
 
     /// Add a new column to the grid.
     ///
     /// *Important:*
     /// Please note that `Grid` uses a Row-Major memory layout. Therefore, the `push_col()`
-    /// operation requires quite a lot of memory shifting and will be significantly slower compared
-    /// to a `push_row()` operation.
+    /// operation will be significantly slower compared to a `push_row()` operation.
     ///
     /// # Examples
     ///
@@ -496,20 +496,21 @@ impl<T> Grid<T> {
     ///
     /// Panics if the grid is not empty and `col.len() != grid.rows()`.
     pub fn push_col(&mut self, col: Vec<T>) {
-        let input_col_len = col.len();
-        if self.cols > 0 && input_col_len != self.rows {
+        if self.cols > 0 && col.len() != self.rows {
             panic!(
                 "pushed column does not match. Length must be {:?}, but was {:?}.",
-                self.rows, input_col_len
+                self.rows, col.len()
             )
         }
-        self.data.reserve(col.len());
-        for (idx, d) in col.into_iter().enumerate() {
-            let vec_idx = (idx + 1) * self.cols + idx;
-            self.data.insert(vec_idx, d);
+        self.data.extend(col);
+        for i in (1..self.rows).rev() {
+            let row_idx = i * self.cols; 
+            self.data[row_idx..row_idx+self.cols+i].rotate_right(i);
         }
         self.cols += 1;
-        self.rows = input_col_len;
+        if self.rows == 0{
+            self.rows = self.data.len();
+        }
     }
 
     /// Removes the last row from a grid and returns it, or None if it is empty.
@@ -523,16 +524,15 @@ impl<T> Grid<T> {
     /// assert_eq![grid.pop_row(), None];
     /// ```
     pub fn pop_row(&mut self) -> Option<Vec<T>> {
-        if self.rows > 0 {
-            let row = self.data.split_off((self.rows - 1) * self.cols);
-            self.rows -= 1;
-            if self.rows == 0 {
-                self.cols = 0;
-            }
-            Some(row)
-        } else {
-            None
+        if self.rows == 0 {
+            return None
         }
+        let row = self.data.split_off((self.rows - 1) * self.cols);
+        self.rows -= 1;
+        if self.rows == 0 {
+            self.cols = 0;
+        }
+        Some(row)
     }
 
     /// Removes the last column from a grid and returns it, or None if it is empty.
@@ -550,20 +550,19 @@ impl<T> Grid<T> {
     /// assert_eq![grid.pop_col(), None];
     /// ```
     pub fn pop_col(&mut self) -> Option<Vec<T>> {
-        if self.cols > 0 {
-            let mut col = Vec::with_capacity(self.rows);
-            for i in 0..self.rows {
-                let idx = i * self.cols + self.cols - 1 - i;
-                col.push(self.data.remove(idx));
-            }
-            self.cols -= 1;
-            if self.cols == 0 {
-                self.rows = 0;
-            }
-            Some(col)
-        } else {
-            None
+        if self.cols == 0 {
+            return None
         }
+        for i in 1..self.rows {
+            let row_idx = i * (self.cols - 1); 
+            self.data[row_idx..row_idx+self.cols+i-1].rotate_left(i);
+        }
+        let col = self.data.split_off(self.data.len() - self.rows);
+        self.cols -= 1;
+        if self.cols == 0 {
+            self.rows = 0;
+        }
+        Some(col)
     }
 
     /// Insert a new row at the index and shifts all rows after down.
@@ -805,11 +804,45 @@ mod test {
     }
 
     #[test]
-    fn pop_col() {
+    fn pop_col_1x3() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 3);
+        assert_eq!(grid.pop_col(), Some(vec![3]));
+        assert_eq!(grid.size(), (1, 2));
+        assert_eq!(grid.pop_col(), Some(vec![2]));
+        assert_eq!(grid.size(), (1, 1));
+        assert_eq!(grid.pop_col(), Some(vec![1]));
+        assert!(grid.is_empty());
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_3x1() {
+        let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 1);
+        assert_eq!(grid.pop_col(), Some(vec![1,2,3]));
+        assert!(grid.is_empty());
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_2x2() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         assert_eq!(grid.pop_col(), Some(vec![2, 4]));
         assert_eq!(grid.size(), (2, 1));
         assert_eq!(grid.pop_col(), Some(vec![1, 3]));
+        assert_eq!(grid.size(), (0, 0));
+        assert_eq!(grid.pop_col(), None);
+    }
+
+    #[test]
+    fn pop_col_3x4() {
+        let mut grid: Grid<u16> = Grid::from_vec(vec![1, 2, 3, 4, 11, 22, 33, 44, 111, 222, 333, 444], 4);
+        assert_eq!(grid.pop_col(), Some(vec![4, 44, 444]));
+        assert_eq!(grid.size(), (3, 3));
+        assert_eq!(grid.pop_col(), Some(vec![3, 33, 333]));
+        assert_eq!(grid.size(), (3, 2));
+        assert_eq!(grid.pop_col(), Some(vec![2, 22, 222]));
+        assert_eq!(grid.size(), (3, 1));
+        assert_eq!(grid.pop_col(), Some(vec![1, 11, 111]));
         assert_eq!(grid.size(), (0, 0));
         assert_eq!(grid.pop_col(), None);
     }
@@ -821,7 +854,7 @@ mod test {
     }
 
     #[test]
-    fn pop_row() {
+    fn pop_row_2x2() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         assert_eq!(grid.pop_row(), Some(vec![3, 4]));
         assert_ne!(grid.size(), (1, 4));
@@ -878,7 +911,7 @@ mod test {
     }
 
     #[test]
-    fn push_col_small() {
+    fn push_col_2x3() {
         let mut grid: Grid<u8> = grid![  
                     [0, 1, 2]
                     [10, 11, 12]];
@@ -895,7 +928,7 @@ mod test {
     }
 
     #[test]
-    fn push_col() {
+    fn push_col_3x4() {
         let mut grid: Grid<char> = grid![  
                     ['a', 'b', 'c', 'd']
                     ['a', 'b', 'c', 'd']
@@ -917,7 +950,7 @@ mod test {
     }
 
     #[test]
-    fn push_col_single() {
+    fn push_col_1x3() {
         let mut grid: Grid<char> = grid![['a', 'b', 'c']];
         grid.push_col(vec!['d']);
         assert_eq!(grid.size(), (1, 4));
@@ -1008,6 +1041,7 @@ mod test {
     #[test]
     fn clear() {
         let mut grid: Grid<u8> = grid![[1, 2, 3]];
+        assert!(!grid.is_empty());
         grid.clear();
         assert!(grid.is_empty());
     }
@@ -1019,9 +1053,13 @@ mod test {
     }
 
     #[test]
-    fn is_empty_true() {
-        let grid: Grid<u8> = grid![];
-        assert!(grid.is_empty());
+    fn is_empty() {
+        let mut g : Grid<u8> =grid![[]];
+        assert!(g.is_empty());
+        g = grid![];
+        assert!(g.is_empty());
+        g = Grid::from_vec(vec![], 0);
+        assert!(g.is_empty());
     }
 
     #[test]
@@ -1086,18 +1124,6 @@ mod test {
         assert_eq!(grid[0][0], 1);
         assert_eq!(grid[0][1], 2);
         assert_eq!(grid[0][2], 3);
-    }
-
-    #[test]
-    fn macro_init_empty() {
-        let grid: Grid<usize> = grid![];
-        assert_eq!(grid.size(), (0, 0));
-    }
-
-    #[test]
-    fn from_vec_zero() {
-        let grid: Grid<u8> = Grid::from_vec(vec![], 0);
-        assert_eq!(grid.size(), (0, 0));
     }
 
     #[test]
@@ -1179,14 +1205,14 @@ mod test {
     #[should_panic]
     fn idx_panic_1() {
         let grid = Grid::init(1, 2, 3);
-        grid[20][0];
+        let _ = grid[20][0];
     }
 
     #[test]
     #[should_panic]
     fn idx_panic_2() {
         let grid = Grid::init(1, 2, 3);
-        grid[0][20];
+        let _ = grid[0][20];
     }
 
     #[test]

@@ -19,7 +19,7 @@ branch = "master"
 status = "actively-developed"
 
 [dev-dependencies]
-criterion = "0.3.1"
+criterion = "0.3.6"
 rand="0.8.5"
 
 [dependencies]
