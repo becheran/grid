@@ -127,17 +127,24 @@ pub struct Grid<T> {
 impl<T> Grid<T> {
     /// Init a grid of size rows x columns with default values of the given type.
     /// For example this will generate a 2x3 grid of zeros:
+    /// 
     /// ```
     /// use grid::Grid;
     /// let grid : Grid<u8> = Grid::new(2,2);
     /// assert_eq!(grid[0][0], 0);
     /// ```
+    /// 
+    /// If `rows == 0` or `cols == 0` the grid will be empty with no cols and rows.
+    /// 
+    /// # Panics
+    ///
+    /// Panics if `rows * cols > usize`.
     pub fn new(rows: usize, cols: usize) -> Grid<T>
     where
         T: Default,
     {
-        if rows < 1 || cols < 1 {
-            panic!("Grid size of rows and columns must be greater than zero.");
+        if rows == 0 || cols == 0 {
+            return Grid { data: Vec::new(), rows:0, cols: 0 }            
         }
         let mut data = Vec::new();
         data.resize_with(rows * cols, T::default);
@@ -145,13 +152,16 @@ impl<T> Grid<T> {
     }
 
     /// Init a grid of size rows x columns with the given data element.
+    /// 
+    /// If `rows == 0` or `cols == 0` the grid will be empty with no cols and rows.
+    /// 
+    /// # Panics
+    ///
+    /// Panics if `rows * cols > usize`.
     pub fn init(rows: usize, cols: usize, data: T) -> Grid<T>
     where
         T: Clone,
     {
-        if rows < 1 || cols < 1 {
-            panic!("Grid size of rows and columns must be greater than zero.");
-        }
         Grid {
             data: vec![data; rows * cols],
             cols,
@@ -1060,6 +1070,15 @@ mod test {
         assert!(g.is_empty());
         g = Grid::from_vec(vec![], 0);
         assert!(g.is_empty());
+        g = Grid::new(0, 0);
+        assert!(g.is_empty());
+        g = Grid::new(0, 1);
+        assert!(g.is_empty());
+        g = Grid::new(1,0);
+        assert!(g.is_empty());
+        g = Grid::init(0, 0,10);
+        assert!(g.is_empty());
+
     }
 
     #[test]
@@ -1159,15 +1178,16 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn init_panics() {
-        Grid::init(0, 2, 3);
+    fn new_panics() {
+        let _ : Grid<u8>= Grid::new(usize::MAX, 2);
     }
 
     #[test]
     #[should_panic]
-    fn ctr_panics_2() {
-        Grid::init(1, 0, 3);
+    fn init_panics() {
+        Grid::init(usize::MAX, 2, 3);
     }
+
 
     #[test]
     fn get() {
