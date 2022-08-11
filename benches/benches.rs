@@ -3,30 +3,22 @@ use grid::grid;
 use grid::Grid;
 use rand::Rng;
 
-const SIZE: usize = 100;
+const SIZE: usize = 1000;
 
-fn init_vec_vec() -> Vec<Vec<u32>> {
+fn init_vec_vec() -> Vec<Vec<u64>> {
     vec![vec![0; SIZE]; SIZE]
 }
 
-fn init_vec_flat() -> Vec<u32> {
-    vec![0; SIZE * SIZE]
-}
-
-fn init_grid() -> Grid<u32> {
-    let mut grid = Grid::init(SIZE, SIZE, 0);
-    for (idx, val) in grid.iter_mut().enumerate() {
-        *val += idx as u32;
-    }
-    grid
+fn init_grid() -> Grid<u64> {
+    Grid::init(SIZE, SIZE, 0)
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
     let mut rng = rand::thread_rng();
     let mut rand = || rng.gen_range(0..SIZE);
 
-    let mut rng_u32 = rand::thread_rng();
-    let mut rand_u32 = || rng_u32.gen::<u32>();
+    let mut rng_u64 = rand::thread_rng();
+    let mut rand_u64 = || rng_u64.gen::<u64>();
 
     // Init macro
     c.bench_function("vecvec_init_macro", |b| {
@@ -55,17 +47,6 @@ fn criterion_benchmark(c: &mut Criterion) {
             ]
         })
     });
-    c.bench_function("grid_from_vec", |b| {
-        b.iter(|| {
-            let vec = vec![
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7,
-                8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
-                6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3,
-                4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
-            ];
-            Grid::from_vec(vec, 10)
-        })
-    });
     c.bench_function("grid_init_macro", |b| {
         b.iter(|| {
             grid![[0,1,2,3,4,5,6,7,8,9]
@@ -80,38 +61,76 @@ fn criterion_benchmark(c: &mut Criterion) {
             [0,1,2,3,4,5,6,7,8,9]]
         })
     });
+    c.bench_function("grid_from_vec", |b| {
+        b.iter(|| {
+            let vec = vec![
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7,
+                8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5,
+                6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3,
+                4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+            ];
+            Grid::from_vec(vec, 10)
+        })
+    });
 
-    // New
+    // Constructor
     c.bench_function("vecvec_init", |b| b.iter(|| vec![vec![0; SIZE]; SIZE]));
-    c.bench_function("flatvec_init", |b| b.iter(init_vec_flat));
     c.bench_function("grid_init", |b| b.iter(|| Grid::init(SIZE, SIZE, 0)));
 
-    // Get
+    // Index
     c.bench_function("vecvec_idx", |b| {
         let vec_vec = init_vec_vec();
-        b.iter(|| vec_vec[rand()][rand()])
+        b.iter_batched(
+            || (rand(), rand()),
+            |(x, y)| {
+                let _v = vec_vec[criterion::black_box(x)][criterion::black_box(y)];
+            },
+            criterion::BatchSize::SmallInput,
+        )
     });
     c.bench_function("grid_idx", |b| {
         let grid = init_grid();
-        b.iter(|| grid[rand()][rand()])
+        b.iter_batched(
+            || (rand(), rand()),
+            |(x, y)| grid[criterion::black_box(x)][criterion::black_box(y)],
+            criterion::BatchSize::SmallInput,
+        )
     });
-    c.bench_function("vecvec_get_fn", |b| {
+    c.bench_function("vecvec_get", |b| {
         let vec_vec = init_vec_vec();
-        b.iter(|| vec_vec.get(rand()).unwrap().get(rand()))
+        b.iter_batched(
+            || (rand(), rand()),
+            |(x, y)| {
+                let _v = vec_vec
+                    .get(criterion::black_box(x))
+                    .unwrap()
+                    .get(criterion::black_box(y))
+                    .unwrap();
+            },
+            criterion::BatchSize::SmallInput,
+        )
     });
-    c.bench_function("grid_get_fn", |b| {
+    c.bench_function("grid_get", |b| {
         let grid = init_grid();
-        b.iter(|| grid.get(rand(), rand()))
+        b.iter_batched(
+            || (rand(), rand()),
+            |(x, y)| {
+                let _v = grid
+                    .get(criterion::black_box(x), criterion::black_box(y))
+                    .unwrap();
+            },
+            criterion::BatchSize::SmallInput,
+        )
     });
 
     //Set
     c.bench_function("vecvec_set", |b| {
         let mut vec_vec = init_vec_vec();
-        b.iter(|| vec_vec[rand()][rand()] = rand_u32())
+        b.iter(|| vec_vec[rand()][rand()] = rand_u64())
     });
     c.bench_function("gird_set", |b| {
         let mut gird = init_grid();
-        b.iter(|| gird[rand()][rand()] = rand_u32())
+        b.iter(|| gird[rand()][rand()] = rand_u64())
     });
 
     // Push
