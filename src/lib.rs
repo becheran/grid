@@ -220,6 +220,7 @@ impl<T> Grid<T> {
     ///
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
+    #[must_use]
     pub unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
         self.data.get_unchecked(row * self.cols + col)
     }
@@ -231,13 +232,14 @@ impl<T> Grid<T> {
     /// 
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
+    #[must_use]
     pub unsafe fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
-        let cols = self.cols;
-        self.data.get_unchecked_mut(row * cols + col)
+        self.data.get_unchecked_mut(row * self.cols + col)
     }
 
     /// Access a certain element in the grid.
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
+    #[must_use]
     pub fn get(&self, row: usize, col: usize) -> Option<&T> {
         if row < self.rows && col < self.cols {
             unsafe { Some(self.get_unchecked(row, col)) }
@@ -248,6 +250,7 @@ impl<T> Grid<T> {
 
     /// Mutable access to a certain element in the grid.
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
+    #[must_use]
     pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
         if row < self.rows && col < self.cols {
             unsafe { Some(self.get_unchecked_mut(row, col)) }
@@ -280,7 +283,7 @@ impl<T> Grid<T> {
     /// assert!(grid.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        self.cols == 0 && self.rows == 0
+        return self.data.is_empty()
     }
 
     /// Clears the grid.
