@@ -83,7 +83,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter_batched(
             || (rand(), rand()),
             |(x, y)| {
-                let _v = vec_vec[criterion::black_box(x)][criterion::black_box(y)];
+                let _v = vec_vec[x][y];
             },
             criterion::BatchSize::SmallInput,
         )
@@ -92,7 +92,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let grid = init_grid();
         b.iter_batched(
             || (rand(), rand()),
-            |(x, y)| grid[criterion::black_box(x)][criterion::black_box(y)],
+            |(x, y)| grid[x][y],
             criterion::BatchSize::SmallInput,
         )
     });
@@ -102,9 +102,9 @@ fn criterion_benchmark(c: &mut Criterion) {
             || (rand(), rand()),
             |(x, y)| {
                 let _v = vec_vec
-                    .get(criterion::black_box(x))
+                    .get(x)
                     .unwrap()
-                    .get(criterion::black_box(y))
+                    .get(y)
                     .unwrap();
             },
             criterion::BatchSize::SmallInput,
@@ -116,7 +116,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             || (rand(), rand()),
             |(x, y)| {
                 let _v = grid
-                    .get(criterion::black_box(x), criterion::black_box(y))
+                    .get(x, y)
                     .unwrap();
             },
             criterion::BatchSize::SmallInput,

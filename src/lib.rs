@@ -723,22 +723,19 @@ impl<T: Clone> Clone for Grid<T> {
 impl<T> Index<usize> for Grid<T> {
     type Output = [T];
 
-    fn index(&self, idx: usize) -> &Self::Output {
-        if idx < self.rows {
-            let start_idx = idx * self.cols;
-            &self.data[start_idx..start_idx + self.cols]
-        } else {
-            panic!(
-                "index {:?} out of bounds. Grid has {:?} rows.",
-                self.rows, idx
-            );
-        }
+    #[inline]
+    fn index(&self, idx: usize) -> &[T] {
+        let start_idx = idx * self.cols;
+        &self.data[start_idx..start_idx + self.cols]
     }
 }
 
 impl<T> IndexMut<usize> for Grid<T> {
-    fn index_mut(&mut self, idx: usize) -> &mut Self::Output {
-        &mut self.data[(idx * self.cols)..]
+    
+    #[inline]
+    fn index_mut(&mut self, idx: usize) -> &mut [T] {
+        let start_idx = idx * self.cols;
+        &mut self.data[start_idx..start_idx + self.cols]
     }
 }
 
@@ -1217,8 +1214,11 @@ mod test {
 
     #[test]
     fn idx() {
-        let grid = Grid::init(1, 2, 3);
-        assert_eq!(grid[0][0], 3);
+        let grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        assert_eq!(grid[0][0], 1);
+        assert_eq!(grid[0][1], 2);
+        assert_eq!(grid[1][0], 3);
+        assert_eq!(grid[1][1], 4);
     }
 
     #[test]
