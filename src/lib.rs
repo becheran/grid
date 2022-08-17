@@ -102,7 +102,7 @@ macro_rules! grid {
                 let rows = rows + 1usize;
             )*
 
-            let mut vec = Vec::with_capacity(rows * cols);
+            let mut vec = Vec::with_capacity(rows.checked_mul(cols).unwrap());
 
             $( vec.push($x0); )*
             $( $( vec.push($x); )* )*
@@ -147,7 +147,7 @@ impl<T> Grid<T> {
             return Grid { data: Vec::new(), rows:0, cols: 0 }            
         }
         let mut data = Vec::new();
-        data.resize_with(rows * cols, T::default);
+        data.resize_with(rows.checked_mul(cols).unwrap(), T::default);
         Grid { data, cols, rows }
     }
 
@@ -162,8 +162,11 @@ impl<T> Grid<T> {
     where
         T: Clone,
     {
+        if rows == 0 || cols == 0 {
+            return Grid { data: Vec::new(), rows:0, cols: 0 }            
+        }
         Grid {
-            data: vec![data; rows * cols],
+            data: vec![data; rows.checked_mul(cols).unwrap()],
             cols,
             rows,
         }
@@ -283,7 +286,7 @@ impl<T> Grid<T> {
     /// assert!(grid.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
-        return self.data.is_empty()
+        self.data.is_empty()
     }
 
     /// Clears the grid.
@@ -463,7 +466,10 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the grid is not empty and `row.len() != grid.cols()`.
+    /// 
+    /// Also panics if `row.len() == 0`
     pub fn push_row(&mut self, row: Vec<T>) {
+        assert_ne!(row.len(), 0);
         if self.rows > 0 && row.len() != self.cols {
             panic!(
                 "pushed row does not match. Length must be {:?}, but was {:?}.",
@@ -508,7 +514,10 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the grid is not empty and `col.len() != grid.rows()`.
+    /// 
+    /// Also panics if `col.len() == 0`
     pub fn push_col(&mut self, col: Vec<T>) {
+        assert_ne!(col.len(), 0);
         if self.cols > 0 && col.len() != self.rows {
             panic!(
                 "pushed column does not match. Length must be {:?}, but was {:?}.",
@@ -590,7 +599,14 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[2], [4,5,6]);
     /// assert_eq!(grid.size(), (3,3))
     /// ```
+    /// 
+    /// # Panics
+    ///
+    /// Panics if the grid is not empty and `row.len() != grid.cols()`.
+    /// 
+    /// Also panics if `row.len() == 0`
     pub fn insert_row(&mut self, index: usize, row: Vec<T>) {
+        assert_ne!(row.len(), 0);
         if row.len() != self.cols {
             panic!("Inserted row must be of length {}, but was {}.", self.cols, row.len());
         }
@@ -616,7 +632,14 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[1], [4,9,5,6]);
     /// assert_eq!(grid.size(), (2,4))
     /// ```
+    /// 
+    /// # Panics
+    ///
+    /// Panics if the grid is not empty and `col.len() != grid.rows()`.
+    /// 
+    /// Also panics if `col.len() == 0`
     pub fn insert_col(&mut self, index: usize, col: Vec<T>) {
+        assert_ne!(col.len(), 0);
         if col.len() != self.rows {
             panic!("Inserted col must be of length {}, but was {}.", self.rows, col.len());
         }
@@ -766,6 +789,20 @@ impl<T: Eq> Eq for Grid<T> {}
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    #[should_panic]
+    fn from_vec_zero_with_cols() {
+        let _: Grid<u8> = Grid::from_vec(vec![], 1);
+    }
+
+    #[test]
+    fn from_vec_zero() {
+        let grid: Grid<u8> = Grid::from_vec(vec![], 0);
+        grid.is_empty();
+        assert_eq!(grid.rows(), 0);
+        assert_eq!(grid.cols(), 0);
+    }
 
     #[test]
     fn insert_col_at_end() {
@@ -984,11 +1021,25 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn push_col_zero_len() {
+        let mut grid: Grid<char> = grid![];
+        grid.push_col(vec![]);
+    }
+
+    #[test]
     fn push_row_empty() {
         let mut grid: Grid<char> = grid![];
         grid.push_row(vec!['b', 'b', 'b', 'b']);
         assert_eq!(grid.size(), (1, 4));
         assert_eq!(grid[0][0], 'b');
+    }
+
+    #[test]
+    #[should_panic]
+    fn push_empty_row() {
+        let mut grid = Grid::init(0, 1, 0);
+        grid.push_row(vec![]);
     }
 
     #[test]
@@ -1171,6 +1222,14 @@ mod test {
     }
 
     #[test]
+    fn init_empty() {
+        let grid = Grid::init(0, 1, 0);
+        assert!(grid.is_empty());
+        assert_eq!(grid.cols(), 0);
+        assert_eq!(grid.rows(), 0);
+    }
+
+    #[test]
     fn new() {
         let grid: Grid<u8> = Grid::new(1, 2);
         assert_eq!(grid[0][0], 0);
@@ -1180,6 +1239,14 @@ mod test {
     #[should_panic]
     fn new_panics() {
         let _ : Grid<u8>= Grid::new(usize::MAX, 2);
+    }
+
+    #[test]
+    fn new_empty() {
+        let grid : Grid<u8>  = Grid::new(0, 1);
+        assert!(grid.is_empty());
+        assert_eq!(grid.cols(), 0);
+        assert_eq!(grid.rows(), 0);
     }
 
     #[test]
