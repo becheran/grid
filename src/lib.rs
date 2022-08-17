@@ -116,6 +116,8 @@ macro_rules! grid {
 ///
 /// Uses a rust `Vec<T>` type to reference the grid data on the heap.
 /// Also the number of rows and columns are stored in the grid data structure.
+/// 
+/// The size limit of a grid is `rows * cols < usize`.
 ///
 /// The grid data is stored in a row-major memory layout.
 pub struct Grid<T> {
