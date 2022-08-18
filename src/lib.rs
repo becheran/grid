@@ -772,8 +772,16 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[");
         if self.cols > 0 {
-            for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
-                write!(f, "{:?}", &self.data[i..(i + self.cols)]);
+            if f.alternate() {
+                write!(f, "\n");
+                for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
+                    write!(f, "    {:?}", &self.data[i..(i + self.cols)]);
+                    write!(f, "\n");
+                }
+            } else {
+                for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
+                    write!(f, "{:?}", &self.data[i..(i + self.cols)]);
+                }
             }
         }
         write!(f, "]")
