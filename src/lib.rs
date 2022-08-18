@@ -773,10 +773,18 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
         write!(f, "[");
         if self.cols > 0 {
             if f.alternate() {
+                let max_length = self.data.iter().map(|i| format!("{:?}", i).len()).max().unwrap();
                 write!(f, "\n");
                 for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
-                    write!(f, "    {:?}", &self.data[i..(i + self.cols)]);
-                    write!(f, "\n");
+                    let mut row = self.data[i..(i + self.cols)].into_iter().peekable();
+                    write!(f, "    [");
+                    while let Some(item) = row.next() {
+                        write!(f, " {item:padding$?}", padding = max_length);
+                        if row.peek().is_some() {
+                            write!(f, ",");
+                        }
+                    }
+                    write!(f, "]\n");
                 }
             } else {
                 for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
