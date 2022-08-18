@@ -778,7 +778,7 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
                     let mut row = self.data[i..(i + self.cols)].iter().peekable();
                     write!(f, "    [");
                     while let Some(item) = row.next() {
-                        write!(f, " {item:width$.precision$?}", width = f.width().unwrap_or_default(), precision = f.precision().unwrap_or(2));
+                        write!(f, " {item:width$.precision$?}", width = f.width().unwrap_or(self.data.iter().map(|i| format!("{i:?}").len()).max().unwrap()), precision = f.precision().unwrap_or(2));
                         if row.peek().is_some() {
                             write!(f, ",");
                         }
@@ -1165,6 +1165,115 @@ mod test {
     fn fmt_grid() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6][7,8,9]];
         assert_eq!(format!("{:?}", grid), "[[1, 2, 3][4, 5, 6][7, 8, 9]]");
+    }
+
+    #[test]
+    fn fmt_pretty_int() {
+        let grid: Grid<u8> = grid![
+            [1,2,3]
+            [4,5,6]
+            [7,8,95]
+        ];
+
+        let expected_output = 
+r#"[
+    [  1,  2,  3]
+    [  4,  5,  6]
+    [  7,  8, 95]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#?}", grid));
+
+        let expected_output = 
+r#"[
+    [   1,   2,   3]
+    [   4,   5,   6]
+    [   7,   8,  95]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#3?}", grid));
+    }
+
+    #[test]
+    fn fmt_pretty_float() {
+        let grid: Grid<f32> = grid![
+            [1.5,2.6,3.44]
+            [4.775,5.,6.]
+            [7.1,8.23444,95.55]
+        ];
+
+        let expected_output = 
+r#"[
+    [   1.5,   2.6,   3.4]
+    [   4.8,   5.0,   6.0]
+    [   7.1,   8.2,  95.6]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#5.1?}", grid));
+
+        let expected_output = 
+r#"[
+    [  1.50000,  2.60000,  3.44000]
+    [  4.77500,  5.00000,  6.00000]
+    [  7.10000,  8.23444, 95.55000]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#8.5?}", grid));
+    }
+
+    #[test]
+    fn fmt_pretty_tuple() {
+        let grid: Grid<(i32, i32)> = grid![
+            [(5,66), (432, 55)]
+            [(80, 90), (5, 6)]
+        ];
+
+        let expected_output = 
+r#"[
+    [ (        5,        66), (      432,        55)]
+    [ (       80,        90), (        5,         6)]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#?}", grid));
+
+        let expected_output = 
+r#"[
+    [ (  5,  66), (432,  55)]
+    [ ( 80,  90), (  5,   6)]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#3?}", grid));
+    }
+
+    #[test]
+    fn fmt_pretty_struct_derived() {
+        #[derive(Debug)]
+        struct Person {
+            _name: String,
+            _precise_age: f32,
+        }
+
+        impl Person {
+            fn new(name: &str, precise_age: f32) -> Self {
+                Person {
+                    _name: name.into(),
+                    _precise_age: precise_age,
+                }
+            }
+        }
+
+        let grid: Grid<Person> = grid![
+            [Person::new("Vic", 24.5), Person::new("Mr. Very Long Name", 1955.)]
+            [Person::new("Sam", 8.9995), Person::new("John Doe", 40.14)]
+        ];
+        
+        let expected_output = 
+r#"[
+    [ Person { _name: "Vic", _precise_age: 24.50000 }, Person { _name: "Mr. Very Long Name", _precise_age: 1955.00000 }]
+    [ Person { _name: "Sam", _precise_age: 8.99950 }, Person { _name: "John Doe", _precise_age: 40.14000 }]
+]"#;
+
+        assert_eq!(expected_output, format!("{:#5.5?}", grid));
     }
 
     #[test]
