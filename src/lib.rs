@@ -613,7 +613,7 @@ impl<T> Grid<T> {
             panic!("Inserted row must be of length {}, but was {}.", self.cols, row.len());
         }
         if index > self.rows {
-            panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.cols);
+            panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.rows);
         }
         self.rows += 1;
         let data_idx = index * self.cols;
@@ -646,7 +646,7 @@ impl<T> Grid<T> {
             panic!("Inserted col must be of length {}, but was {}.", self.rows, col.len());
         }
         if index > self.cols {
-            panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.rows);
+            panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.cols);
         }
         for (row_iter, col_val) in col.into_iter().enumerate() {
             let data_idx = row_iter * self.cols + index + row_iter;
