@@ -774,11 +774,33 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
         if self.cols > 0 {
             if f.alternate() {
                 write!(f, "\n");
+                /*
+                    WARNING
+                    
+                    Compound types becoming enormous as the entire `fmt::Debug` width is applied to each item individually.
+                    For tuples and structs define padding and precision arguments manually to improve readability.
+                */ 
+                let width = f.width().unwrap_or(
+                    /*
+                        Conditionally calculate the longest item by default.
+                    */ 
+                    self.data
+                        .iter()
+                        .map(|i| format!("{i:?}").len())
+                        .max()
+                        .unwrap(),
+                );
+                let precision = f.precision().unwrap_or(2);
                 for (i, _) in self.data.iter().enumerate().step_by(self.cols) {
                     let mut row = self.data[i..(i + self.cols)].iter().peekable();
                     write!(f, "    [");
                     while let Some(item) = row.next() {
-                        write!(f, " {item:width$.precision$?}", width = f.width().unwrap_or(self.data.iter().map(|i| format!("{i:?}").len()).max().unwrap()), precision = f.precision().unwrap_or(2));
+                        write!(
+                            f,
+                            " {item:width$.precision$?}",
+                            width = width,
+                            precision = precision
+                        );
                         if row.peek().is_some() {
                             write!(f, ",");
                         }
@@ -1168,6 +1190,12 @@ mod test {
     }
 
     #[test]
+    fn fmt_pretty_empty() {
+        let grid: Grid<f32> = grid![];
+        assert_eq!(format!("{:#?}", grid), "[]");
+    }
+
+    #[test]
     fn fmt_pretty_int() {
         let grid: Grid<u8> = grid![
             [1,2,3]
@@ -1182,7 +1210,7 @@ r#"[
     [  7,  8, 95]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#?}", grid));
+        assert_eq!(format!("{:#?}", grid), expected_output);
 
         let expected_output = 
 r#"[
@@ -1191,7 +1219,7 @@ r#"[
     [   7,   8,  95]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#3?}", grid));
+        assert_eq!(format!("{:#3?}", grid), expected_output);
     }
 
     #[test]
@@ -1209,7 +1237,7 @@ r#"[
     [   7.1,   8.2,  95.6]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#5.1?}", grid));
+        assert_eq!(format!("{:#5.1?}", grid), expected_output);
 
         let expected_output = 
 r#"[
@@ -1218,7 +1246,7 @@ r#"[
     [  7.10000,  8.23444, 95.55000]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#8.5?}", grid));
+        assert_eq!(format!("{:#8.5?}", grid), expected_output);
     }
 
     #[test]
@@ -1234,7 +1262,7 @@ r#"[
     [ (       80,        90), (        5,         6)]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#?}", grid));
+        assert_eq!(format!("{:#?}", grid), expected_output);
 
         let expected_output = 
 r#"[
@@ -1242,7 +1270,7 @@ r#"[
     [ ( 80,  90), (  5,   6)]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#3?}", grid));
+        assert_eq!(format!("{:#3?}", grid), expected_output);
     }
 
     #[test]
@@ -1273,7 +1301,7 @@ r#"[
     [ Person { _name: "Sam", _precise_age: 8.99950 }, Person { _name: "John Doe", _precise_age: 40.14000 }]
 ]"#;
 
-        assert_eq!(expected_output, format!("{:#5.5?}", grid));
+        assert_eq!(format!("{:#5.5?}", grid), expected_output);
     }
 
     #[test]
