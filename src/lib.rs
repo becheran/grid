@@ -605,19 +605,18 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the grid is not empty and `row.len() != grid.cols()`.
-    /// 
-    /// Also panics if `row.len() == 0`
     pub fn insert_row(&mut self, index: usize, row: Vec<T>) {
-        assert_ne!(row.len(), 0);
-        if row.len() != self.cols {
+        let input_len = row.len();
+        if self.cols > 0 && input_len != self.cols {
             panic!("Inserted row must be of length {}, but was {}.", self.cols, row.len());
         }
         if index > self.rows {
             panic!("Out of range. Index was {}, but must be less or equal to {}.", index, self.rows);
         }
-        self.rows += 1;
-        let data_idx = index * self.cols;
+        let data_idx = index * input_len;
         self.data.splice(data_idx..data_idx, row.into_iter());
+        self.cols = input_len;
+        self.rows += 1;
     }
 
     /// Insert a new column at the index.
@@ -638,11 +637,9 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the grid is not empty and `col.len() != grid.rows()`.
-    /// 
-    /// Also panics if `col.len() == 0`
     pub fn insert_col(&mut self, index: usize, col: Vec<T>) {
-        assert_ne!(col.len(), 0);
-        if col.len() != self.rows {
+        let input_len = col.len();
+        if self.rows > 0 && input_len != self.rows {
             panic!("Inserted col must be of length {}, but was {}.", self.rows, col.len());
         }
         if index > self.cols {
@@ -652,6 +649,7 @@ impl<T> Grid<T> {
             let data_idx = row_iter * self.cols + index + row_iter;
             self.data.insert(data_idx, col_val);
         }
+        self.rows = input_len;
         self.cols += 1;
     }
     
@@ -865,6 +863,22 @@ mod test {
         assert_eq!(grid[0], [1, 2]);
         assert_eq!(grid[1], [3, 4]);
         assert_eq!(grid[2], [5, 6]);
+    }
+
+    #[test]
+    fn insert_row_empty() {
+        let mut grid: Grid<u8> = grid![];
+        grid.insert_row(0, vec![1, 2, 3]);
+        assert_eq!(grid[0], [1, 2, 3]);
+        assert_eq!((1,3), grid.size());
+    }
+
+    #[test]
+    fn insert_col_empty() {
+        let mut grid: Grid<u8> = grid![];
+        grid.insert_col(0, vec![1, 2, 3]);
+        assert_eq!(grid[0], [1]);
+        assert_eq!((3,1), grid.size());
     }
 
     #[test]
