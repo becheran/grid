@@ -246,22 +246,14 @@ impl<T> Grid<T> {
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
     pub fn get(&self, row: usize, col: usize) -> Option<&T> {
-        if row < self.rows && col < self.cols {
-            unsafe { Some(self.get_unchecked(row, col)) }
-        } else {
-            None
-        }
+        self.data.get(row * self.cols + col)
     }
 
     /// Mutable access to a certain element in the grid.
     /// Returns None if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
     pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
-        if row < self.rows && col < self.cols {
-            unsafe { Some(self.get_unchecked_mut(row, col)) }
-        } else {
-            None
-        }
+        self.data.get_mut(row * self.cols + col)
     }
 
     /// Returns the size of the gird as a two element tuple.
