@@ -33,18 +33,18 @@ assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(not(feature = "std"))]
-extern crate no_std_compat as std;
-#[cfg(not(feature = "std"))]
-use std::prelude::v1::*;
+#[cfg(all(not(feature = "std")))]
+extern crate alloc;
+#[cfg(all(not(feature = "std")))]
+use alloc::{vec::Vec, vec, format};
 
-use std::cmp::Eq;
-use std::fmt;
-use std::iter::StepBy;
-use std::ops::Index;
-use std::ops::IndexMut;
-use std::slice::Iter;
-use std::slice::IterMut;
+use core::cmp::Eq;
+use core::fmt;
+use core::iter::StepBy;
+use core::ops::Index;
+use core::ops::IndexMut;
+use core::slice::Iter;
+use core::slice::IterMut;
 
 #[doc(hidden)]
 #[macro_export]
@@ -826,6 +826,8 @@ impl<T: Eq> Eq for Grid<T> {}
 #[cfg(test)]
 mod test {
     use super::*;
+    #[cfg(all(not(feature = "std")))]
+    use alloc::{string::String};
 
     #[test]
     #[should_panic]

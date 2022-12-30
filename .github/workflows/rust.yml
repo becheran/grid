@@ -25,3 +25,11 @@ jobs:
       run: cargo test --verbose
     - name: Run test release
       run: cargo test --verbose --release
+  test-alloc:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run test
+      run: cargo test --verbose --no-default-features
+    - name: Run test release
+      run: cargo test --verbose --release --no-default-features
