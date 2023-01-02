@@ -734,6 +734,42 @@ impl<T> Grid<T> {
     {
         self.data.fill_with(f)
     }
+
+    /// Iterate over the rows of the grid. Each time an iterator over a single
+    /// row is returned.
+    ///
+    /// An item in this iterator is equal to a call to Grid.iter_row(row_index)
+    /// of the corresponding row.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// let sum_by_row: Vec<u8> = grid.iter_rows().map(|row| row.sum()).collect();
+    /// assert_eq!(sum_by_row, vec![1+2+3, 4+5+6])
+    /// ```
+    pub fn iter_rows(&self) -> GridRowIter<'_, T> {
+        GridRowIter{grid: self, row_index: 0}
+    }
+
+    /// Iterate over the columns of the grid. Each time an iterator over a single
+    /// column is returned.
+    ///
+    /// An item in this iterator is equal to a call to Grid.iter_col(col_index)
+    /// of the corresponding column.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3][4,5,6]];
+    /// let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
+    /// assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6])
+    /// ```
+    pub fn iter_cols(&self) -> GridColIter<'_, T> {
+        GridColIter { grid: self, col_index: 0 }
+    }
 }
 
 impl<T: Clone> Clone for Grid<T> {
@@ -822,6 +858,45 @@ impl<T: Eq> PartialEq for Grid<T> {
 }
 
 impl<T: Eq> Eq for Grid<T> {}
+
+
+pub struct GridRowIter<'a, T>{grid: &'a Grid<T>, row_index: usize}
+pub struct GridColIter<'a, T>{grid: &'a Grid<T>, col_index: usize}
+
+impl<'a, T> Iterator for GridRowIter<'a, T> {
+    type Item = Iter<'a, T>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let rows = self.grid.rows();
+        let row_index = self.row_index;
+
+        if !(0..rows).contains(&row_index) {
+            return None;
+        }
+
+        let row_iter = self.grid.iter_row(row_index);
+        self.row_index += 1;
+        return Some(row_iter);
+    }
+}
+
+impl<'a, T> Iterator for GridColIter<'a, T> {
+    type Item = StepBy<Iter<'a, T>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let cols = self.grid.cols();
+        let col_index = self.col_index;
+
+        if !(0..cols).contains(&col_index) {
+            return None;
+        }
+
+        let row_iter = self.grid.iter_col(col_index);
+        self.col_index += 1;
+        return Some(row_iter);
+    }
+}
+
 
 #[cfg(test)]
 mod test {
@@ -1508,5 +1583,34 @@ r#"[
         grid.fill_with(Default::default);
         assert_eq!(grid[0], [0,0,0]);
         assert_eq!(grid[1], [0,0,0]);
+    }
+
+    #[test]
+    fn iter_rows() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let max_by_row: Vec<u8> = grid
+            .iter_rows()
+            .map(|row| row.max().unwrap())
+            .map(|item| *item)
+            .collect();
+        assert_eq!(max_by_row, vec![3, 6]);
+
+        let sum_by_row: Vec<u8> = grid.iter_rows().map(|row| row.sum()).collect();
+        assert_eq!(sum_by_row, vec![1+2+3, 4+5+6])
+    }
+
+    #[test]
+    fn iter_cols() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let max_by_col: Vec<u8> = grid
+            .iter_cols()
+            .map(|col| col.max().unwrap())
+            .map(|item| *item)
+            .collect();
+
+        assert_eq!(max_by_col, vec![4,5,6]);
+
+        let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
+        assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6])
     }
 }
