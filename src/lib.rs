@@ -132,7 +132,7 @@ impl<T> Grid<T> {
     /// 
     /// ```
     /// use grid::Grid;
-    /// let grid : Grid<u8> = Grid::new(2,2);
+    /// let grid : Grid<u8> = Grid::new(2,3);
     /// assert_eq!(grid[0][0], 0);
     /// ```
     /// 
