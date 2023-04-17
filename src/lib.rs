@@ -801,6 +801,22 @@ impl<T> IndexMut<usize> for Grid<T> {
     }
 }
 
+impl<T> Index<(usize, usize)> for Grid<T> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, (x, y): (usize, usize)) -> &T {
+        &self.data[y * self.cols + x]
+    }
+}
+
+impl<T> IndexMut<(usize, usize)> for Grid<T> {
+    #[inline]
+    fn index_mut(&mut self, (x, y): (usize, usize)) -> &mut T {
+        &mut self.data[y * self.cols + x]
+    }
+}
+
 impl<T: fmt::Debug> fmt::Debug for Grid<T> {
     #[allow(unused_must_use)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
