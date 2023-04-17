@@ -565,14 +565,10 @@ impl<T> Grid<T> {
     /// ```
     /// use grid::*;
     /// let mut grid = grid![[1,2][3,4][5,6]];
-    /// assert_eq![grid.remove_row(1), Some(vec![3,4])];
-    /// println!("grid: {:?}", grid);
+    /// assert_eq![grid.remove_row(1), Some(vec![3,4])];   
     /// assert_eq![grid.remove_row(0), Some(vec![1,2])];
-    /// println!("grid: {:?}", grid);
     /// assert_eq![grid.remove_row(0), Some(vec![5,6])];
-    /// println!("grid: {:?}", grid);
     /// assert_eq![grid.remove_row(0), None];
-    /// println!("grid: {:?}", grid);
     /// ```
     pub fn remove_row(&mut self, row_index: usize) -> Option<Vec<T>> {
         if self.cols == 0 || self.rows == 0 || row_index > self.rows {
@@ -632,26 +628,10 @@ impl<T> Grid<T> {
         if self.cols == 0 || self.rows == 0 || col_index > self.cols {
             return None;
         }
-        println!(
-            "self.rows: {};row_index: {}, self.cols: {}",
-            self.rows, col_index, self.cols
-        );
         let mut residue: Vec<T> = vec![];
         for i in 0..self.rows {
-            println!(
-                "{} * {} + {} - {} == {}",
-                i,
-                self.cols,
-                col_index,
-                i,
-                i * self.cols + col_index - i
-            );
-            residue.push(self.data.remove(i * self.cols + col_index - i));
+        	self.cols -= 1;
         }
-        /*
-        0 * 16 + 0 - 1 - 0
-         */
-        self.cols -= 1;
         Some(residue)
     }
 
