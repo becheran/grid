@@ -630,8 +630,9 @@ impl<T> Grid<T> {
         }
         let mut residue: Vec<T> = vec![];
         for i in 0..self.rows {
-        	self.cols -= 1;
+			residue.push(self.data.remove(i * self.cols + col_index - i));
         }
+       	self.cols -= 1;
         Some(residue)
     }
 
