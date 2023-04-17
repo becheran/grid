@@ -555,6 +555,33 @@ impl<T> Grid<T> {
         Some(row)
     }
 
+    /// Remove a Row at the index and return a vector of it.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2][3,4][5,6]];
+    /// assert_eq![grid.remove_row(1), Some(vec![3,4])];
+    /// println!("grid: {:?}", grid);
+    /// assert_eq![grid.remove_row(0), Some(vec![1,2])];
+    /// println!("grid: {:?}", grid);
+    /// assert_eq![grid.remove_row(0), Some(vec![5,6])];
+    /// println!("grid: {:?}", grid);
+    /// assert_eq![grid.remove_row(0), None];
+    /// println!("grid: {:?}", grid);
+    /// ```
+    pub fn remove_row(&mut self, row_index: usize) -> Option<Vec<T>> {
+        if self.cols == 0 || self.rows == 0 || row_index > self.rows {
+            return None;
+        }
+        let residue = self
+            .data
+            .drain((row_index * self.cols)..((row_index + 1) * self.cols));
+
+        self.rows -= 1;
+        Some(residue.collect())
+    }
+
     /// Removes the last column from a grid and returns it, or None if it is empty.
     ///
     /// Note that this operation is much slower than the `pop_row()` because the memory layout
@@ -583,6 +610,45 @@ impl<T> Grid<T> {
             self.rows = 0;
         }
         Some(col)
+    }
+
+    /// Remove a column at the index and return a vector of it.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
+    /// assert_eq![grid.remove_col(3), Some(vec![4,8,12,16])];
+    /// assert_eq![grid.remove_col(0), Some(vec![1,5,9,13])];
+    /// assert_eq![grid.remove_col(1), Some(vec![3,7,11,15])];
+    /// assert_eq![grid.remove_col(0), Some(vec![2,6,10,14])];
+    /// assert_eq![grid.remove_col(0), None];
+    /// ```
+    pub fn remove_col(&mut self, col_index: usize) -> Option<Vec<T>> {
+        if self.cols == 0 || self.rows == 0 || col_index > self.cols {
+            return None;
+        }
+        println!(
+            "self.rows: {};row_index: {}, self.cols: {}",
+            self.rows, col_index, self.cols
+        );
+        let mut residue: Vec<T> = vec![];
+        for i in 0..self.rows {
+            println!(
+                "{} * {} + {} - {} == {}",
+                i,
+                self.cols,
+                col_index,
+                i,
+                i * self.cols + col_index - i
+            );
+            residue.push(self.data.remove(i * self.cols + col_index - i));
+        }
+        /*
+        0 * 16 + 0 - 1 - 0
+         */
+        self.cols -= 1;
+        Some(residue)
     }
 
     /// Insert a new row at the index and shifts all rows after down.
@@ -1657,5 +1723,22 @@ r#"[
 
         let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
         assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6]);
+    }
+        #[test]
+    fn remove_col_empty() {
+        let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
+        assert_eq![grid.remove_col(3), Some(vec![4, 8, 12, 16])];
+        assert_eq![grid.remove_col(0), Some(vec![1, 5, 9, 13])];
+        assert_eq![grid.remove_col(1), Some(vec![3, 7, 11, 15])];
+        assert_eq![grid.remove_col(0), Some(vec![2, 6, 10, 14])];
+        assert_eq![grid.remove_col(0), None];
+    }
+    #[test]
+    fn remove_row_empty() {
+        let mut grid = grid![[1,2][3,4][5,6]];
+        assert_eq![grid.remove_row(1), Some(vec![3, 4])];
+        assert_eq![grid.remove_row(0), Some(vec![1, 2])];
+        assert_eq![grid.remove_row(0), Some(vec![5, 6])];
+        assert_eq![grid.remove_row(0), None];
     }
 }
