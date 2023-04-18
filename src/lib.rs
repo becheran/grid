@@ -567,7 +567,7 @@ impl<T> Grid<T> {
     /// assert_eq![grid.remove_row(0), None];
     /// ```
     pub fn remove_row(&mut self, row_index: usize) -> Option<Vec<T>> {
-        if self.cols == 0 || self.rows == 0 || row_index > self.rows {
+        if self.cols == 0 || self.rows == 0 || row_index >= self.rows {
             return None;
         }
         let residue = self
@@ -621,7 +621,7 @@ impl<T> Grid<T> {
     /// assert_eq![grid.remove_col(0), None];
     /// ```
     pub fn remove_col(&mut self, col_index: usize) -> Option<Vec<T>> {
-        if self.cols == 0 || self.rows == 0 || col_index > self.cols {
+        if self.cols == 0 || self.rows == 0 || col_index >= self.cols {
             return None;
         }
         let mut residue: Vec<T> = vec![];
@@ -1705,8 +1705,8 @@ r#"[
         let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
         assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6]);
     }
-        #[test]
-    fn remove_col_empty() {
+    #[test]
+    fn remove_col() {
         let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
         assert_eq![grid.remove_col(3), Some(vec![4, 8, 12, 16])];
         assert_eq![grid.remove_col(0), Some(vec![1, 5, 9, 13])];
@@ -1715,11 +1715,23 @@ r#"[
         assert_eq![grid.remove_col(0), None];
     }
     #[test]
-    fn remove_row_empty() {
+    fn remove_row() {
         let mut grid = grid![[1,2][3,4][5,6]];
         assert_eq![grid.remove_row(1), Some(vec![3, 4])];
         assert_eq![grid.remove_row(0), Some(vec![1, 2])];
         assert_eq![grid.remove_row(0), Some(vec![5, 6])];
         assert_eq![grid.remove_row(0), None];
+    }
+    #[test]
+    fn remove_row_out_of_bound(){
+        let mut grid = grid![[1, 2][3, 4]];
+        assert_eq![grid.remove_row(5), None];
+        assert_eq![grid.remove_row(1), Some(vec![3, 4])];
+    }
+    #[test]
+    fn remove_col_out_of_bound(){
+        let mut grid = grid![[1, 2][3, 4]];
+        assert_eq!(grid.remove_col(5), None);
+        assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
     }
 }
