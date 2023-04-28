@@ -1734,33 +1734,4 @@ r#"[
         assert_eq!(grid.remove_col(5), None);
         assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
     }
-    #[test]
-    fn remove_col() {
-        let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
-        assert_eq![grid.remove_col(3), Some(vec![4, 8, 12, 16])];
-        assert_eq![grid.remove_col(0), Some(vec![1, 5, 9, 13])];
-        assert_eq![grid.remove_col(1), Some(vec![3, 7, 11, 15])];
-        assert_eq![grid.remove_col(0), Some(vec![2, 6, 10, 14])];
-        assert_eq![grid.remove_col(0), None];
-    }
-    #[test]
-    fn remove_row() {
-        let mut grid = grid![[1,2][3,4][5,6]];
-        assert_eq![grid.remove_row(1), Some(vec![3, 4])];
-        assert_eq![grid.remove_row(0), Some(vec![1, 2])];
-        assert_eq![grid.remove_row(0), Some(vec![5, 6])];
-        assert_eq![grid.remove_row(0), None];
-    }
-    #[test]
-    fn remove_row_out_of_bound(){
-        let mut grid = grid![[1, 2][3, 4]];
-        assert_eq![grid.remove_row(5), None];
-        assert_eq![grid.remove_row(1), Some(vec![3, 4])];
-    }
-    #[test]
-    fn remove_col_out_of_bound(){
-        let mut grid = grid![[1, 2][3, 4]];
-        assert_eq!(grid.remove_col(5), None);
-        assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
-    }
 }
