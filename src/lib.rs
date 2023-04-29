@@ -200,25 +200,20 @@ impl<T> Grid<T> {
     ///
     /// # Panics
     ///
-    /// This can panic if the vector is empty, or if the vector length isn't a multiple of the number of columns.
+    /// This panics if the vector length isn't a multiple of the number of columns.
     #[must_use] pub fn from_vec(vec: Vec<T>, cols: usize) -> Grid<T> {
-        let rows = vec.len();
-        if rows == 0 {
-            if cols == 0 {
-                Grid {
-                    data: vec![],
-                    rows: 0,
-                    cols: 0,
-                }
-            } else {
-                panic!("Vector length is zero, but cols is {:?}", cols);
+        let rows = vec.len().checked_div(cols).unwrap_or(0);
+        assert_eq!(rows * cols, vec.len(), "Vector length {:?} should be a multiple of cols = {:?}", vec.len(), cols);
+        if rows == 0 || cols == 0 {
+            Grid {
+                data: vec,
+                rows: 0,
+                cols: 0,
             }
-        } else if rows % cols != 0 {
-            panic!("Vector length must be a multiple of cols.");
         } else {
             Grid {
                 data: vec,
-                rows: rows / cols,
+                rows,
                 cols,
             }
         }
@@ -915,9 +910,10 @@ mod test {
     use alloc::{string::String};
 
     #[test]
-    #[should_panic]
     fn from_vec_zero_with_cols() {
-        let _: Grid<u8> = Grid::from_vec(vec![], 1);
+        let grid: Grid<u8> = Grid::from_vec(vec![], 1);
+        assert_eq!(grid.rows(), 0);
+        assert_eq!(grid.cols(), 0);
     }
 
     #[test]
@@ -1471,9 +1467,11 @@ r#"[
     }
 
     #[test]
-    #[should_panic]
-    fn from_vec_panics_3() {
-        let _: Grid<u8> = Grid::from_vec(vec![], 1);
+    fn from_vec_uses_original_vec() {
+        let capacity = 10_000_000;
+        let vec = Vec::with_capacity(capacity);
+        let grid: Grid<u8> = Grid::from_vec(vec, 0);
+        assert!(grid.into_vec().capacity() >= capacity);
     }
 
     #[test]
