@@ -40,6 +40,7 @@ extern crate alloc;
 #[cfg(all(not(feature = "std")))]
 use alloc::{vec::Vec, vec, format};
 
+use core::cmp;
 use core::cmp::Eq;
 use core::fmt;
 use core::iter::StepBy;
@@ -575,6 +576,9 @@ impl<T> Grid<T> {
             .drain((row_index * self.cols)..((row_index + 1) * self.cols));
 
         self.rows -= 1;
+        if self.rows == 0 {
+            self.cols = 0;
+        }
         Some(residue.collect())
     }
 
@@ -624,12 +628,17 @@ impl<T> Grid<T> {
         if self.cols == 0 || self.rows == 0 || col_index >= self.cols {
             return None;
         }
-        let mut residue: Vec<T> = vec![];
         for i in 0..self.rows {
-			residue.push(self.data.remove(i * self.cols + col_index - i));
+            let row_idx = col_index + i * (self.cols - 1);
+            let end = cmp::min(row_idx+self.cols+i, self.data.len());
+            self.data[row_idx..end].rotate_left(i + 1);
         }
-       	self.cols -= 1;
-        Some(residue)
+        let col = self.data.split_off(self.data.len() - self.rows);
+        self.cols -= 1;
+        if self.cols == 0 {
+            self.rows = 0;
+        }
+        Some(col)
     }
 
     /// Insert a new row at the index and shifts all rows after down.

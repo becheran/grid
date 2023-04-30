@@ -157,7 +157,7 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         )
     });
-    
+
     // Remove
     c.bench_function("grid_remove_row", |b| {
         let grid = init_grid();
