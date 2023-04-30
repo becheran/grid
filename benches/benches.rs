@@ -157,6 +157,24 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         )
     });
+    
+    // Remove
+    c.bench_function("grid_remove_row", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.remove_row(2),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_remove_col", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.remove_col(2),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
