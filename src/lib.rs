@@ -40,6 +40,7 @@ extern crate alloc;
 #[cfg(all(not(feature = "std")))]
 use alloc::{vec::Vec, vec, format};
 
+use core::cmp;
 use core::cmp::Eq;
 use core::fmt;
 use core::iter::StepBy;
@@ -550,6 +551,32 @@ impl<T> Grid<T> {
         Some(row)
     }
 
+    /// Remove a Row at the index and return a vector of it.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2][3,4][5,6]];
+    /// assert_eq![grid.remove_row(1), Some(vec![3,4])];   
+    /// assert_eq![grid.remove_row(0), Some(vec![1,2])];
+    /// assert_eq![grid.remove_row(0), Some(vec![5,6])];
+    /// assert_eq![grid.remove_row(0), None];
+    /// ```
+    pub fn remove_row(&mut self, row_index: usize) -> Option<Vec<T>> {
+        if self.cols == 0 || self.rows == 0 || row_index >= self.rows {
+            return None;
+        }
+        let residue = self
+            .data
+            .drain((row_index * self.cols)..((row_index + 1) * self.cols));
+
+        self.rows -= 1;
+        if self.rows == 0 {
+            self.cols = 0;
+        }
+        Some(residue.collect())
+    }
+
     /// Removes the last column from a grid and returns it, or None if it is empty.
     ///
     /// Note that this operation is much slower than the `pop_row()` because the memory layout
@@ -571,6 +598,35 @@ impl<T> Grid<T> {
         for i in 1..self.rows {
             let row_idx = i * (self.cols - 1); 
             self.data[row_idx..row_idx+self.cols+i-1].rotate_left(i);
+        }
+        let col = self.data.split_off(self.data.len() - self.rows);
+        self.cols -= 1;
+        if self.cols == 0 {
+            self.rows = 0;
+        }
+        Some(col)
+    }
+
+    /// Remove a column at the index and return a vector of it.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
+    /// assert_eq![grid.remove_col(3), Some(vec![4,8,12,16])];
+    /// assert_eq![grid.remove_col(0), Some(vec![1,5,9,13])];
+    /// assert_eq![grid.remove_col(1), Some(vec![3,7,11,15])];
+    /// assert_eq![grid.remove_col(0), Some(vec![2,6,10,14])];
+    /// assert_eq![grid.remove_col(0), None];
+    /// ```
+    pub fn remove_col(&mut self, col_index: usize) -> Option<Vec<T>> {
+        if self.cols == 0 || self.rows == 0 || col_index >= self.cols {
+            return None;
+        }
+        for i in 0..self.rows {
+            let row_idx = col_index + i * (self.cols - 1);
+            let end = cmp::min(row_idx+self.cols+i, self.data.len());
+            self.data[row_idx..end].rotate_left(i + 1);
         }
         let col = self.data.split_off(self.data.len() - self.rows);
         self.cols -= 1;
@@ -1655,5 +1711,34 @@ r#"[
 
         let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
         assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6]);
+    }
+    #[test]
+    fn remove_col() {
+        let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
+        assert_eq![grid.remove_col(3), Some(vec![4, 8, 12, 16])];
+        assert_eq![grid.remove_col(0), Some(vec![1, 5, 9, 13])];
+        assert_eq![grid.remove_col(1), Some(vec![3, 7, 11, 15])];
+        assert_eq![grid.remove_col(0), Some(vec![2, 6, 10, 14])];
+        assert_eq![grid.remove_col(0), None];
+    }
+    #[test]
+    fn remove_row() {
+        let mut grid = grid![[1,2][3,4][5,6]];
+        assert_eq![grid.remove_row(1), Some(vec![3, 4])];
+        assert_eq![grid.remove_row(0), Some(vec![1, 2])];
+        assert_eq![grid.remove_row(0), Some(vec![5, 6])];
+        assert_eq![grid.remove_row(0), None];
+    }
+    #[test]
+    fn remove_row_out_of_bound(){
+        let mut grid = grid![[1, 2][3, 4]];
+        assert_eq![grid.remove_row(5), None];
+        assert_eq![grid.remove_row(1), Some(vec![3, 4])];
+    }
+    #[test]
+    fn remove_col_out_of_bound(){
+        let mut grid = grid![[1, 2][3, 4]];
+        assert_eq!(grid.remove_col(5), None);
+        assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
     }
 }
