@@ -38,7 +38,7 @@ assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
 #[cfg(all(not(feature = "std")))]
 extern crate alloc;
 #[cfg(all(not(feature = "std")))]
-use alloc::{vec::Vec, vec, format};
+use alloc::{format, vec, vec::Vec};
 
 use core::cmp;
 use core::cmp::Eq;
@@ -119,7 +119,7 @@ macro_rules! grid {
 ///
 /// Uses a rust `Vec<T>` type to reference the grid data on the heap.
 /// Also the number of rows and columns are stored in the grid data structure.
-/// 
+///
 /// The size limit of a grid is `rows * cols < usize`.
 ///
 /// The grid data is stored in a row-major memory layout.
@@ -132,15 +132,15 @@ pub struct Grid<T> {
 impl<T> Grid<T> {
     /// Init a grid of size rows x columns with default values of the given type.
     /// For example this will generate a 2x3 grid of zeros:
-    /// 
+    ///
     /// ```
     /// use grid::Grid;
     /// let grid : Grid<u8> = Grid::new(2,3);
     /// assert_eq!(grid[0][0], 0);
     /// ```
-    /// 
+    ///
     /// If `rows == 0` or `cols == 0` the grid will be empty with no cols and rows.
-    /// 
+    ///
     /// # Panics
     ///
     /// Panics if `rows * cols > usize`.
@@ -149,7 +149,11 @@ impl<T> Grid<T> {
         T: Default,
     {
         if rows == 0 || cols == 0 {
-            return Grid { data: Vec::new(), rows:0, cols: 0 }            
+            return Grid {
+                data: Vec::new(),
+                rows: 0,
+                cols: 0,
+            };
         }
         let mut data = Vec::new();
         data.resize_with(rows.checked_mul(cols).unwrap(), T::default);
@@ -157,9 +161,9 @@ impl<T> Grid<T> {
     }
 
     /// Init a grid of size rows x columns with the given data element.
-    /// 
+    ///
     /// If `rows == 0` or `cols == 0` the grid will be empty with no cols and rows.
-    /// 
+    ///
     /// # Panics
     ///
     /// Panics if `rows * cols > usize`.
@@ -168,7 +172,11 @@ impl<T> Grid<T> {
         T: Clone,
     {
         if rows == 0 || cols == 0 {
-            return Grid { data: Vec::new(), rows:0, cols: 0 }            
+            return Grid {
+                data: Vec::new(),
+                rows: 0,
+                cols: 0,
+            };
         }
         Grid {
             data: vec![data; rows.checked_mul(cols).unwrap()],
@@ -202,9 +210,16 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// This panics if the vector length isn't a multiple of the number of columns.
-    #[must_use] pub fn from_vec(vec: Vec<T>, cols: usize) -> Grid<T> {
+    #[must_use]
+    pub fn from_vec(vec: Vec<T>, cols: usize) -> Grid<T> {
         let rows = vec.len().checked_div(cols).unwrap_or(0);
-        assert_eq!(rows * cols, vec.len(), "Vector length {:?} should be a multiple of cols = {:?}", vec.len(), cols);
+        assert_eq!(
+            rows * cols,
+            vec.len(),
+            "Vector length {:?} should be a multiple of cols = {:?}",
+            vec.len(),
+            cols
+        );
         if rows == 0 || cols == 0 {
             Grid {
                 data: vec,
@@ -236,7 +251,7 @@ impl<T> Grid<T> {
     /// Generally not recommended, use with caution!
     ///
     /// # Safety
-    /// 
+    ///
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     #[must_use]
@@ -268,17 +283,20 @@ impl<T> Grid<T> {
 
     /// Returns the size of the gird as a two element tuple.
     /// First element are the number of rows and the second the columns.
-    #[must_use] pub fn size(&self) -> (usize, usize) {
+    #[must_use]
+    pub fn size(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
 
     /// Returns the number of rows of the grid.
-    #[must_use] pub fn rows(&self) -> usize {
+    #[must_use]
+    pub fn rows(&self) -> usize {
         self.rows
     }
 
     /// Returns the number of columns of the grid.
-    #[must_use] pub fn cols(&self) -> usize {
+    #[must_use]
+    pub fn cols(&self) -> usize {
         self.cols
     }
 
@@ -289,7 +307,8 @@ impl<T> Grid<T> {
     /// let grid : Grid<u8> = grid![];
     /// assert!(grid.is_empty());
     /// ```
-    #[must_use] pub fn is_empty(&self) -> bool {
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
@@ -472,11 +491,15 @@ impl<T> Grid<T> {
     ///  - `row.len() == 0`
     pub fn push_row(&mut self, row: Vec<T>) {
         assert_ne!(row.len(), 0);
-        assert!(!(self.rows > 0 && row.len() != self.cols), "pushed row does not match. Length must be {:?}, but was {:?}.",
-                self.cols, row.len());
+        assert!(
+            !(self.rows > 0 && row.len() != self.cols),
+            "pushed row does not match. Length must be {:?}, but was {:?}.",
+            self.cols,
+            row.len()
+        );
         self.data.extend(row);
         self.rows += 1;
-        if self.cols == 0{
+        if self.cols == 0 {
             self.cols = self.data.len();
         }
     }
@@ -516,15 +539,19 @@ impl<T> Grid<T> {
     ///  - `col.len() == 0`
     pub fn push_col(&mut self, col: Vec<T>) {
         assert_ne!(col.len(), 0);
-        assert!(!(self.cols > 0 && col.len() != self.rows), "pushed column does not match. Length must be {:?}, but was {:?}.",
-                self.rows, col.len());
+        assert!(
+            !(self.cols > 0 && col.len() != self.rows),
+            "pushed column does not match. Length must be {:?}, but was {:?}.",
+            self.rows,
+            col.len()
+        );
         self.data.extend(col);
         for i in (1..self.rows).rev() {
-            let row_idx = i * self.cols; 
-            self.data[row_idx..row_idx+self.cols+i].rotate_right(i);
+            let row_idx = i * self.cols;
+            self.data[row_idx..row_idx + self.cols + i].rotate_right(i);
         }
         self.cols += 1;
-        if self.rows == 0{
+        if self.rows == 0 {
             self.rows = self.data.len();
         }
     }
@@ -541,7 +568,7 @@ impl<T> Grid<T> {
     /// ```
     pub fn pop_row(&mut self) -> Option<Vec<T>> {
         if self.rows == 0 {
-            return None
+            return None;
         }
         let row = self.data.split_off((self.rows - 1) * self.cols);
         self.rows -= 1;
@@ -593,11 +620,11 @@ impl<T> Grid<T> {
     /// ```
     pub fn pop_col(&mut self) -> Option<Vec<T>> {
         if self.cols == 0 {
-            return None
+            return None;
         }
         for i in 1..self.rows {
-            let row_idx = i * (self.cols - 1); 
-            self.data[row_idx..row_idx+self.cols+i-1].rotate_left(i);
+            let row_idx = i * (self.cols - 1);
+            self.data[row_idx..row_idx + self.cols + i - 1].rotate_left(i);
         }
         let col = self.data.split_off(self.data.len() - self.rows);
         self.cols -= 1;
@@ -625,7 +652,7 @@ impl<T> Grid<T> {
         }
         for i in 0..self.rows {
             let row_idx = col_index + i * (self.cols - 1);
-            let end = cmp::min(row_idx+self.cols+i, self.data.len());
+            let end = cmp::min(row_idx + self.cols + i, self.data.len());
             self.data[row_idx..end].rotate_left(i + 1);
         }
         let col = self.data.split_off(self.data.len() - self.rows);
@@ -648,7 +675,7 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[2], [4,5,6]);
     /// assert_eq!(grid.size(), (3,3))
     /// ```
-    /// 
+    ///
     /// # Panics
     ///
     /// Panics if:
@@ -656,8 +683,18 @@ impl<T> Grid<T> {
     /// - the index is greater than the number of rows
     pub fn insert_row(&mut self, index: usize, row: Vec<T>) {
         let input_len = row.len();
-        assert!(!(self.cols > 0 && input_len != self.cols), "Inserted row must be of length {}, but was {}.", self.cols, row.len());
-        assert!(index <= self.rows, "Out of range. Index was {}, but must be less or equal to {}.", index, self.rows);
+        assert!(
+            !(self.cols > 0 && input_len != self.cols),
+            "Inserted row must be of length {}, but was {}.",
+            self.cols,
+            row.len()
+        );
+        assert!(
+            index <= self.rows,
+            "Out of range. Index was {}, but must be less or equal to {}.",
+            index,
+            self.rows
+        );
         let data_idx = index * input_len;
         self.data.splice(data_idx..data_idx, row.into_iter());
         self.cols = input_len;
@@ -665,9 +702,9 @@ impl<T> Grid<T> {
     }
 
     /// Insert a new column at the index.
-    /// 
+    ///
     /// Important! Insertion of columns is a lot slower than the lines insertion.
-    /// This is because of the memory layout of the grid data structure. 
+    /// This is because of the memory layout of the grid data structure.
     ///
     /// # Examples
     /// ```
@@ -678,7 +715,7 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[1], [4,9,5,6]);
     /// assert_eq!(grid.size(), (2,4))
     /// ```
-    /// 
+    ///
     /// # Panics
     ///
     /// Panics if:
@@ -686,8 +723,18 @@ impl<T> Grid<T> {
     /// - the index is greater than the number of columns
     pub fn insert_col(&mut self, index: usize, col: Vec<T>) {
         let input_len = col.len();
-        assert!(!(self.rows > 0 && input_len != self.rows), "Inserted col must be of length {}, but was {}.", self.rows, col.len());
-        assert!(index <= self.cols, "Out of range. Index was {}, but must be less or equal to {}.", index, self.cols);
+        assert!(
+            !(self.rows > 0 && input_len != self.rows),
+            "Inserted col must be of length {}, but was {}.",
+            self.rows,
+            col.len()
+        );
+        assert!(
+            index <= self.cols,
+            "Out of range. Index was {}, but must be less or equal to {}.",
+            index,
+            self.cols
+        );
         for (row_iter, col_val) in col.into_iter().enumerate() {
             let data_idx = row_iter * self.cols + index + row_iter;
             self.data.insert(data_idx, col_val);
@@ -695,7 +742,7 @@ impl<T> Grid<T> {
         self.rows = input_len;
         self.cols += 1;
     }
-    
+
     /// Returns a reference to the internal data structure of the grid.
     ///
     /// Grid uses a row major layout.
@@ -708,17 +755,20 @@ impl<T> Grid<T> {
     /// let flat = grid.flatten();
     /// assert_eq!(flat, &vec![1,2,3,4,5,6]);
     /// ```
-    #[must_use] pub fn flatten(&self) -> &Vec<T> {
+    #[must_use]
+    pub fn flatten(&self) -> &Vec<T> {
         &self.data
     }
 
     /// Converts self into a vector without clones or allocation.
-    #[must_use] pub fn into_vec(self) -> Vec<T> {
+    #[must_use]
+    pub fn into_vec(self) -> Vec<T> {
         self.data
     }
 
     /// Transpose the grid so that columns become rows in new grid.
-    #[must_use] pub fn transpose(&self) -> Grid<T>
+    #[must_use]
+    pub fn transpose(&self) -> Grid<T>
     where
         T: Clone,
     {
@@ -747,8 +797,8 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[1], [7,7,7]);
     /// ```
     pub fn fill(&mut self, value: T)
-        where
-            T: Clone 
+    where
+        T: Clone,
     {
         self.data.fill(value);
     }
@@ -772,8 +822,8 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[1], [0,0,0]);
     /// ```
     pub fn fill_with<F>(&mut self, f: F)
-        where
-            F: FnMut() -> T,
+    where
+        F: FnMut() -> T,
     {
         self.data.fill_with(f);
     }
@@ -792,8 +842,12 @@ impl<T> Grid<T> {
     /// let sum_by_row: Vec<u8> = grid.iter_rows().map(|row| row.sum()).collect();
     /// assert_eq!(sum_by_row, vec![1+2+3, 4+5+6])
     /// ```
-    #[must_use] pub fn iter_rows(&self) -> GridRowIter<'_, T> {
-        GridRowIter{grid: self, row_index: 0}
+    #[must_use]
+    pub fn iter_rows(&self) -> GridRowIter<'_, T> {
+        GridRowIter {
+            grid: self,
+            row_index: 0,
+        }
     }
 
     /// Iterate over the columns of the grid. Each time an iterator over a single
@@ -810,8 +864,12 @@ impl<T> Grid<T> {
     /// let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
     /// assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6])
     /// ```
-    #[must_use] pub fn iter_cols(&self) -> GridColIter<'_, T> {
-        GridColIter { grid: self, col_index: 0 }
+    #[must_use]
+    pub fn iter_cols(&self) -> GridColIter<'_, T> {
+        GridColIter {
+            grid: self,
+            col_index: 0,
+        }
     }
 }
 
@@ -836,7 +894,6 @@ impl<T> Index<usize> for Grid<T> {
 }
 
 impl<T> IndexMut<usize> for Grid<T> {
-    
     #[inline]
     fn index_mut(&mut self, idx: usize) -> &mut [T] {
         let start_idx = idx * self.cols;
@@ -849,7 +906,12 @@ impl<T> Index<(usize, usize)> for Grid<T> {
 
     #[inline]
     fn index(&self, (row, col): (usize, usize)) -> &T {
-        assert!(!(row >= self.rows || col >= self.cols), "grid index out of bounds: ({row},{col}) out of ({},{})", self.rows, self.cols);
+        assert!(
+            !(row >= self.rows || col >= self.cols),
+            "grid index out of bounds: ({row},{col}) out of ({},{})",
+            self.rows,
+            self.cols
+        );
         &self.data[row * self.cols + col]
     }
 }
@@ -857,7 +919,12 @@ impl<T> Index<(usize, usize)> for Grid<T> {
 impl<T> IndexMut<(usize, usize)> for Grid<T> {
     #[inline]
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
-        assert!(!(row >= self.rows || col >= self.cols), "grid index out of bounds: ({row},{col}) out of ({},{})", self.rows, self.cols);
+        assert!(
+            !(row >= self.rows || col >= self.cols),
+            "grid index out of bounds: ({row},{col}) out of ({},{})",
+            self.rows,
+            self.cols
+        );
         &mut self.data[row * self.cols + col]
     }
 }
@@ -871,14 +938,14 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
                 writeln!(f);
                 /*
                     WARNING
-                    
+
                     Compound types becoming enormous as the entire `fmt::Debug` width is applied to each item individually.
                     For tuples and structs define padding and precision arguments manually to improve readability.
-                */ 
+                */
                 let width = f.width().unwrap_or(
                     /*
                         Conditionally calculate the longest item by default.
-                    */ 
+                    */
                     self.data
                         .iter()
                         .map(|i| format!("{i:?}").len())
@@ -920,9 +987,14 @@ impl<T: Eq> PartialEq for Grid<T> {
 
 impl<T: Eq> Eq for Grid<T> {}
 
-
-pub struct GridRowIter<'a, T>{grid: &'a Grid<T>, row_index: usize}
-pub struct GridColIter<'a, T>{grid: &'a Grid<T>, col_index: usize}
+pub struct GridRowIter<'a, T> {
+    grid: &'a Grid<T>,
+    row_index: usize,
+}
+pub struct GridColIter<'a, T> {
+    grid: &'a Grid<T>,
+    col_index: usize,
+}
 
 impl<'a, T> Iterator for GridRowIter<'a, T> {
     type Item = Iter<'a, T>;
@@ -958,12 +1030,11 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
     #[cfg(all(not(feature = "std")))]
-    use alloc::{string::String};
+    use alloc::string::String;
 
     #[test]
     fn from_vec_zero_with_cols() {
@@ -1009,7 +1080,7 @@ mod test {
         let mut grid: Grid<u8> = grid![];
         grid.insert_row(0, vec![1, 2, 3]);
         assert_eq!(grid[0], [1, 2, 3]);
-        assert_eq!((1,3), grid.size());
+        assert_eq!((1, 3), grid.size());
     }
 
     #[test]
@@ -1017,7 +1088,7 @@ mod test {
         let mut grid: Grid<u8> = grid![];
         grid.insert_col(0, vec![1, 2, 3]);
         assert_eq!(grid[0], [1]);
-        assert_eq!((3,1), grid.size());
+        assert_eq!((3, 1), grid.size());
     }
 
     #[test]
@@ -1057,7 +1128,7 @@ mod test {
     #[test]
     fn pop_col_3x1() {
         let mut grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 1);
-        assert_eq!(grid.pop_col(), Some(vec![1,2,3]));
+        assert_eq!(grid.pop_col(), Some(vec![1, 2, 3]));
         assert!(grid.is_empty());
         assert_eq!(grid.pop_col(), None);
     }
@@ -1074,7 +1145,8 @@ mod test {
 
     #[test]
     fn pop_col_3x4() {
-        let mut grid: Grid<u16> = Grid::from_vec(vec![1, 2, 3, 4, 11, 22, 33, 44, 111, 222, 333, 444], 4);
+        let mut grid: Grid<u16> =
+            Grid::from_vec(vec![1, 2, 3, 4, 11, 22, 33, 44, 111, 222, 333, 444], 4);
         assert_eq!(grid.pop_col(), Some(vec![4, 44, 444]));
         assert_eq!(grid.size(), (3, 3));
         assert_eq!(grid.pop_col(), Some(vec![3, 33, 333]));
@@ -1314,7 +1386,7 @@ mod test {
 
     #[test]
     fn is_empty() {
-        let mut g : Grid<u8> =grid![[]];
+        let mut g: Grid<u8> = grid![[]];
         assert!(g.is_empty());
         g = grid![];
         assert!(g.is_empty());
@@ -1324,11 +1396,10 @@ mod test {
         assert!(g.is_empty());
         g = Grid::new(0, 1);
         assert!(g.is_empty());
-        g = Grid::new(1,0);
+        g = Grid::new(1, 0);
         assert!(g.is_empty());
-        g = Grid::init(0, 0,10);
+        g = Grid::init(0, 0, 10);
         assert!(g.is_empty());
-
     }
 
     #[test]
@@ -1363,8 +1434,7 @@ mod test {
             [7,8,95]
         ];
 
-        let expected_output = 
-r#"[
+        let expected_output = r#"[
     [  1,  2,  3]
     [  4,  5,  6]
     [  7,  8, 95]
@@ -1372,8 +1442,7 @@ r#"[
 
         assert_eq!(format!("{:#?}", grid), expected_output);
 
-        let expected_output = 
-r#"[
+        let expected_output = r#"[
     [   1,   2,   3]
     [   4,   5,   6]
     [   7,   8,  95]
@@ -1390,8 +1459,7 @@ r#"[
             [7.1,8.23444,95.55]
         ];
 
-        let expected_output = 
-r#"[
+        let expected_output = r#"[
     [   1.5,   2.6,   3.4]
     [   4.8,   5.0,   6.0]
     [   7.1,   8.2,  95.6]
@@ -1399,8 +1467,7 @@ r#"[
 
         assert_eq!(format!("{:#5.1?}", grid), expected_output);
 
-        let expected_output = 
-r#"[
+        let expected_output = r#"[
     [  1.50000,  2.60000,  3.44000]
     [  4.77500,  5.00000,  6.00000]
     [  7.10000,  8.23444, 95.55000]
@@ -1416,16 +1483,14 @@ r#"[
             [(80, 90), (5, 6)]
         ];
 
-        let expected_output = 
-r#"[
+        let expected_output = r#"[
     [ (        5,        66), (      432,        55)]
     [ (       80,        90), (        5,         6)]
 ]"#;
 
         assert_eq!(format!("{grid:#?}"), expected_output);
 
-        let expected_output = 
-r#"[
+        let expected_output = r#"[
     [ (  5,  66), (432,  55)]
     [ ( 80,  90), (  5,   6)]
 ]"#;
@@ -1454,9 +1519,8 @@ r#"[
             [Person::new("Vic", 24.5), Person::new("Mr. Very Long Name", 1955.)]
             [Person::new("Sam", 8.9995), Person::new("John Doe", 40.14)]
         ];
-        
-        let expected_output = 
-r#"[
+
+        let expected_output = r#"[
     [ Person { _name: "Vic", _precise_age: 24.50000 }, Person { _name: "Mr. Very Long Name", _precise_age: 1955.00000 }]
     [ Person { _name: "Sam", _precise_age: 8.99950 }, Person { _name: "John Doe", _precise_age: 40.14000 }]
 ]"#;
@@ -1554,12 +1618,12 @@ r#"[
     #[test]
     #[should_panic]
     fn new_panics() {
-        let _ : Grid<u8>= Grid::new(usize::MAX, 2);
+        let _: Grid<u8> = Grid::new(usize::MAX, 2);
     }
 
     #[test]
     fn new_empty() {
-        let grid : Grid<u8>  = Grid::new(0, 1);
+        let grid: Grid<u8> = Grid::new(0, 1);
         assert!(grid.is_empty());
         assert_eq!(grid.cols(), 0);
         assert_eq!(grid.rows(), 0);
@@ -1570,7 +1634,6 @@ r#"[
     fn init_panics() {
         Grid::init(usize::MAX, 2, 3);
     }
-
 
     #[test]
     fn get() {
@@ -1610,10 +1673,10 @@ r#"[
     #[test]
     fn idx_tup() {
         let grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
-        assert_eq!(grid[(0,0)], 1);
-        assert_eq!(grid[(0,1)], 2);
-        assert_eq!(grid[(1,0)], 3);
-        assert_eq!(grid[(1,1)], 4);
+        assert_eq!(grid[(0, 0)], 1);
+        assert_eq!(grid[(0, 1)], 2);
+        assert_eq!(grid[(1, 0)], 3);
+        assert_eq!(grid[(1, 1)], 4);
     }
 
     #[test]
@@ -1654,7 +1717,7 @@ r#"[
     #[test]
     fn idx_tup_set() {
         let mut grid = Grid::init(1, 2, 3);
-        grid[(0,0)] = 4;
+        grid[(0, 0)] = 4;
         assert_eq!(grid[(0, 0)], 4);
     }
 
@@ -1674,16 +1737,16 @@ r#"[
     fn fill() {
         let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         grid.fill(7);
-        assert_eq!(grid[0], [7,7,7]);
-        assert_eq!(grid[1], [7,7,7]);
+        assert_eq!(grid[0], [7, 7, 7]);
+        assert_eq!(grid[1], [7, 7, 7]);
     }
 
     #[test]
     fn fill_with() {
         let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         grid.fill_with(Default::default);
-        assert_eq!(grid[0], [0,0,0]);
-        assert_eq!(grid[1], [0,0,0]);
+        assert_eq!(grid[0], [0, 0, 0]);
+        assert_eq!(grid[1], [0, 0, 0]);
     }
 
     #[test]
@@ -1691,12 +1754,13 @@ r#"[
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         let max_by_row: Vec<u8> = grid
             .iter_rows()
-            .map(|row| row.max().unwrap()).copied()
+            .map(|row| row.max().unwrap())
+            .copied()
             .collect();
         assert_eq!(max_by_row, vec![3, 6]);
 
         let sum_by_row: Vec<u8> = grid.iter_rows().map(|row| row.sum()).collect();
-        assert_eq!(sum_by_row, vec![1+2+3, 4+5+6]);
+        assert_eq!(sum_by_row, vec![1 + 2 + 3, 4 + 5 + 6]);
     }
 
     #[test]
@@ -1704,13 +1768,14 @@ r#"[
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         let max_by_col: Vec<u8> = grid
             .iter_cols()
-            .map(|col| col.max().unwrap()).copied()
+            .map(|col| col.max().unwrap())
+            .copied()
             .collect();
 
-        assert_eq!(max_by_col, vec![4,5,6]);
+        assert_eq!(max_by_col, vec![4, 5, 6]);
 
         let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
-        assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6]);
+        assert_eq!(sum_by_col, vec![1 + 4, 2 + 5, 3 + 6]);
     }
     #[test]
     fn remove_col() {
@@ -1730,13 +1795,13 @@ r#"[
         assert_eq![grid.remove_row(0), None];
     }
     #[test]
-    fn remove_row_out_of_bound(){
+    fn remove_row_out_of_bound() {
         let mut grid = grid![[1, 2][3, 4]];
         assert_eq![grid.remove_row(5), None];
         assert_eq![grid.remove_row(1), Some(vec![3, 4])];
     }
     #[test]
-    fn remove_col_out_of_bound(){
+    fn remove_col_out_of_bound() {
         let mut grid = grid![[1, 2][3, 4]];
         assert_eq!(grid.remove_col(5), None);
         assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
