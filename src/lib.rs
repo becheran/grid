@@ -459,6 +459,33 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Traverse the grid with row and column indexes.
+    /// 
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<u8> = grid![[1,2][3,4]];
+    /// let mut iter = grid.indexed_iter();
+    /// assert_eq!(iter.next(), Some(((0, 0), &1)));
+    /// 
+    /// ```
+    /// 
+    /// Or simply unpack in a `for`  loop
+    /// 
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<u8> = grid![[1,2][3,4]];
+    /// for ((row, col), i) in grid.indexed_iter() {
+    ///     println!("value at row {row} and column {col} is: {i}");
+    /// }
+    /// ```
+    /// 
+    pub fn indexed_iter(&self) -> GridIndexedIter<'_, T> {
+        GridIndexedIter { grid: &self, index: 0 }
+    }
+
     /// Add a new row to the grid.
     ///
     /// # Examples
@@ -996,6 +1023,11 @@ pub struct GridColIter<'a, T> {
     col_index: usize,
 }
 
+pub struct GridIndexedIter<'a, T> {
+    grid: &'a Grid<T>,
+    index: usize
+}
+
 impl<'a, T> Iterator for GridRowIter<'a, T> {
     type Item = Iter<'a, T>;
 
@@ -1027,6 +1059,24 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
         let row_iter = self.grid.iter_col(col_index);
         self.col_index += 1;
         Some(row_iter)
+    }
+}
+
+impl<'a, T> Iterator for GridIndexedIter<'a, T> {
+    type Item = ((usize, usize), &'a T);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.grid.cols * self.grid.rows {
+            return None;
+        }
+
+        let row = self.index / self.grid.cols;
+        let col = self.index % self.grid.cols;
+        let item = &self.grid.data[self.index];
+
+        self.index += 1;
+        
+        Some(((row, col), item))
     }
 }
 
@@ -1367,6 +1417,17 @@ mod test {
         assert_eq!(iter.next(), Some(&2));
         assert_eq!(iter.next(), Some(&3));
         assert_eq!(iter.next(), Some(&4));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_iter() {
+        let grid: Grid<u8> = grid![[1,2][3,4]];
+        let mut iter: GridIndexedIter<u8> = grid.indexed_iter();
+        assert_eq!(iter.next(), Some(((0, 0), &1)));
+        assert_eq!(iter.next(), Some(((0, 1), &2)));
+        assert_eq!(iter.next(), Some(((1, 0), &3)));
+        assert_eq!(iter.next(), Some(((1, 1), &4)));
         assert_eq!(iter.next(), None);
     }
 
