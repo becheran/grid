@@ -469,10 +469,9 @@ impl<T> Grid<T> {
     /// let grid: Grid<u8> = grid![[1,2][3,4]];
     /// let mut iter = grid.indexed_iter();
     /// assert_eq!(iter.next(), Some(((0, 0), &1)));
-    /// 
     /// ```
     /// 
-    /// Or simply unpack in a `for`  loop
+    /// Or simply unpack in a `for`  loop:
     /// 
     /// ```
     /// use grid::*;
