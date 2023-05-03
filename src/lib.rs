@@ -479,7 +479,6 @@ impl<T> Grid<T> {
     ///     println!("value at row {row} and column {col} is: {i}");
     /// }
     /// ```
-    /// 
     pub fn indexed_iter(&self) -> impl Iterator<Item=((usize, usize), &T)> {
         self.data.iter().enumerate().map(move |(idx, i)| 
             ((idx / self.cols, idx % self.cols), i)
@@ -1401,11 +1400,17 @@ mod test {
     fn indexed_iter() {
         let grid: Grid<u8> = grid![[1,2][3,4]];
         let mut iter = grid.indexed_iter();
-        assert_eq!(grid[0][0], 1u8);
         assert_eq!(iter.next(), Some(((0, 0), &1)));
         assert_eq!(iter.next(), Some(((0, 1), &2)));
         assert_eq!(iter.next(), Some(((1, 0), &3)));
         assert_eq!(iter.next(), Some(((1, 1), &4)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_iter_empty() {
+        let grid: Grid<u8> = Grid::new(0, 0);
+        let mut iter = grid.indexed_iter();
         assert_eq!(iter.next(), None);
     }
 
