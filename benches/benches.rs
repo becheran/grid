@@ -175,6 +175,32 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         )
     });
+
+    // Rotation
+    c.bench_function("grid_rotate_left", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |g| g.rotate_left(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_rotate_right", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |g| g.rotate_right(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_rotate_half", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |g| g.rotate_half(),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);

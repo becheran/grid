@@ -811,6 +811,82 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Rotate the grid 90° counter-clockwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid = grid![[1,2,3][4,5,6]];
+    /// assert_eq!(grid.rotate_left(), grid![[3,6][2,5][1,4]]);
+    /// ```
+    #[must_use]
+    pub fn rotate_left(&self) -> Grid<T>
+    where
+        T: Clone,
+    {
+        let mut data = Vec::with_capacity(self.data.len());
+        for c in (0..self.cols).rev() {
+            for r in 0..self.rows {
+                data.push(self[r][c].clone());
+            }
+        }
+        Grid {
+            data,
+            cols: self.rows,
+            rows: self.cols,
+        }
+    }
+
+    /// Rotate the grid 90° clockwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid = grid![[1,2,3][4,5,6]];
+    /// assert_eq!(grid.rotate_right(), grid![[4,1][5,2][6,3]]);
+    /// ```
+    #[must_use]
+    pub fn rotate_right(&self) -> Grid<T>
+    where
+        T: Clone,
+    {
+        let mut data = Vec::with_capacity(self.data.len());
+        for c in 0..self.cols {
+            for r in (0..self.rows).rev() {
+                data.push(self[r][c].clone());
+            }
+        }
+        Grid {
+            data,
+            cols: self.rows,
+            rows: self.cols,
+        }
+    }
+
+    /// Rotate the grid 180°.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid = grid![[1,2,3][4,5,6]];
+    /// assert_eq!(grid.rotate_half(), grid![[6,5,4][3,2,1]]);
+    /// ```
+    #[must_use]
+    pub fn rotate_half(&self) -> Grid<T>
+    where
+        T: Clone,
+    {
+        let data: Vec<_> = self.data.iter().rev().cloned().collect();
+        Grid {
+            data,
+            cols: self.cols,
+            rows: self.rows,
+        }
+    }
+
     /// Fills the grid with elements by cloning `value`.
     ///
     /// # Examples
