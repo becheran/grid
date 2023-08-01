@@ -35,9 +35,9 @@ assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(all(not(feature = "std")))]
+#[cfg(not(feature = "std"))]
 extern crate alloc;
-#[cfg(all(not(feature = "std")))]
+#[cfg(not(feature = "std"))]
 use alloc::{format, vec, vec::Vec};
 #[cfg(feature = "serde")]
 use serde::{
@@ -1222,7 +1222,7 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    #[cfg(all(not(feature = "std")))]
+    #[cfg(not(feature = "std"))]
     use alloc::string::String;
 
     #[test]
