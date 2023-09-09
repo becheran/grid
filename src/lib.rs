@@ -39,6 +39,11 @@ assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
 extern crate alloc;
 #[cfg(all(not(feature = "std")))]
 use alloc::{format, vec, vec::Vec};
+#[cfg(feature = "serde")]
+use serde::{
+    ser::{Serialize, Serializer, SerializeStruct},
+    de::{self, Deserialize, Deserializer, Visitor, SeqAccess, MapAccess}
+};
 
 use core::cmp;
 use core::cmp::Eq;
@@ -127,6 +132,87 @@ pub struct Grid<T> {
     data: Vec<T>,
     cols: usize,
     rows: usize,
+}
+
+#[cfg(feature = "serde")]
+impl<'de, T: Deserialize<'de>> Deserialize<'de> for Grid<T> {
+
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        use std::marker::PhantomData;
+        #[derive(serde::Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field { Data, Cols }
+
+        struct GridVisitor<T> {
+            _p: PhantomData<T>,
+        }
+
+        impl<'de, T: Deserialize<'de>> Visitor<'de> for GridVisitor<T> {
+            type Value = Grid<T>;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Grid")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<Grid<T>, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let cols = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let data = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                Ok(Grid::from_vec(data, cols))
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<Grid<T>, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut cols = None;
+                let mut data = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Data => {
+                            if data.is_some() {
+                                return Err(de::Error::duplicate_field("data"));
+                            }
+                            data = Some(map.next_value()?);
+                        }
+                        Field::Cols => {
+                            if cols.is_some() {
+                                return Err(de::Error::duplicate_field("cols"));
+                            }
+                            cols = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let cols = cols.ok_or_else(|| de::Error::missing_field("cols"))?;
+                let data = data.ok_or_else(|| de::Error::missing_field("data"))?;
+                Ok(Grid::from_vec(data, cols))
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["cols", "data"];
+        deserializer.deserialize_struct("Grid", FIELDS, GridVisitor{ _p: PhantomData})
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<T: Serialize> Serialize for Grid<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // 3 is the number of fields in the struct.
+        let mut state = serializer.serialize_struct("Grid", 3)?;
+        state.serialize_field("cols", &self.cols)?;
+        state.serialize_field("data", &self.data)?;
+        state.end()
+    }
 }
 
 impl<T> Grid<T> {
@@ -460,18 +546,18 @@ impl<T> Grid<T> {
     }
 
     /// Traverse the grid with row and column indexes.
-    /// 
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use grid::*;
     /// let grid: Grid<u8> = grid![[1,2][3,4]];
     /// let mut iter = grid.indexed_iter();
     /// assert_eq!(iter.next(), Some(((0, 0), &1)));
     /// ```
-    /// 
+    ///
     /// Or simply unpack in a `for`  loop:
-    /// 
+    ///
     /// ```
     /// use grid::*;
     /// let grid: Grid<u8> = grid![[1,2][3,4]];
@@ -479,10 +565,11 @@ impl<T> Grid<T> {
     ///     println!("value at row {row} and column {col} is: {i}");
     /// }
     /// ```
-    pub fn indexed_iter(&self) -> impl Iterator<Item=((usize, usize), &T)> {
-        self.data.iter().enumerate().map(move |(idx, i)| 
-            ((idx / self.cols, idx % self.cols), i)
-        )
+    pub fn indexed_iter(&self) -> impl Iterator<Item = ((usize, usize), &T)> {
+        self.data
+            .iter()
+            .enumerate()
+            .map(move |(idx, i)| ((idx / self.cols, idx % self.cols), i))
     }
 
     /// Add a new row to the grid.
@@ -1925,5 +2012,24 @@ mod test {
         let mut grid = grid![[1, 2][3, 4]];
         assert_eq!(grid.remove_col(5), None);
         assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
+    }
+
+    #[cfg(feature = "serde")]
+    mod serde_tests {
+        use super::*;
+
+        #[test]
+        fn serialize() {
+            let grid: Grid<u8> = grid![[1, 2][3, 4]];
+            let s = serde_json::to_string(&grid).unwrap();
+            println!("{s}");
+        }
+
+        #[test]
+        fn deserialize() {
+            let s = "{ \"cols\": 2, \"data\": [1, 2, 3, 4] }";
+            let grid: Grid<u8> = serde_json::from_str(&s).unwrap();
+            assert_eq!(grid, grid![[1, 2][3, 4]]);
+        }
     }
 }
