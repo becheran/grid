@@ -79,7 +79,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let grid = init_grid();
         b.iter_batched(
             || (rand(), rand()),
-            |(x, y)| grid[x][y],
+            |(x, y)| grid[(x, y)],
             criterion::BatchSize::SmallInput,
         )
     });
@@ -117,7 +117,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let mut g = init_grid();
         b.iter_batched(
             || (rand(), rand()),
-            |(x, y)| g[x][y] = 42,
+            |(x, y)| g[(x, y)] = 42,
             criterion::BatchSize::SmallInput,
         )
     });
@@ -181,7 +181,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let grid = init_grid();
         b.iter_batched(
             || grid.clone(),
-            |g| g.rotate_left(),
+            |mut g| g.rotate_left(),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -189,7 +189,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let grid = init_grid();
         b.iter_batched(
             || grid.clone(),
-            |g| g.rotate_right(),
+            |mut g| g.rotate_right(),
             criterion::BatchSize::SmallInput,
         )
     });
@@ -197,7 +197,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         let grid = init_grid();
         b.iter_batched(
             || grid.clone(),
-            |g| g.rotate_half(),
+            |mut g| g.rotate_half(),
             criterion::BatchSize::SmallInput,
         )
     });
