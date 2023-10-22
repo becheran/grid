@@ -85,9 +85,7 @@ macro_rules! count {
 /// assert_eq!(grid.size(), (3, 3))
 /// ```
 ///
-/// # Examples
-///
-/// Not that each row must be of the same length. The following example will not compile:  
+/// Note that each row must be of the same length. The following example will not compile:
 ///  
 /// ``` ignore
 /// use grid::grid;
@@ -136,26 +134,24 @@ macro_rules! grid {
 /// In this example a grid of numbers from 1 to 9 is created:
 ///
 /// ```
-/// use grid::grid2;
-/// let grid = grid2![[1, 2, 3]
+/// use grid::grid_cm;
+/// let grid = grid_cm![[1, 2, 3]
 /// [4, 5, 6]
 /// [7, 8, 9]];
 /// assert_eq!(grid.size(), (3, 3));
 /// assert_eq!(grid[(1, 1)], 5);
 /// ```
 ///
-/// # Examples
-///
-/// Not that each row must be of the same length. The following example will not compile:
+/// Note that each row must be of the same length. The following example will not compile:
 ///
 /// ``` ignore
-/// use grid::grid2;
-/// let grid = grid2![[1, 2, 3]
+/// use grid::grid_cm;
+/// let grid = grid_cm![[1, 2, 3]
 /// [4, 5] // This does not work!
 /// [7, 8, 9]];
 /// ```
 #[macro_export]
-macro_rules! grid2 {
+macro_rules! grid_cm {
     () => {
         $crate::Grid::from_vec_with_order(vec![], 0, $crate::Order::ColumnMajor)
     };
@@ -634,6 +630,11 @@ impl<T> Grid<T> {
     /// assert_eq!(col_iter.next(), None);
     /// ```
     ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a row-major memory layout,
+    /// which is the default.
+    ///
     /// # Panics
     ///
     /// Panics if the col index is out of bounds.
@@ -666,6 +667,11 @@ impl<T> Grid<T> {
     /// *next.unwrap() = 10;
     /// assert_eq!(grid[(0, 1)], 10);
     /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a row-major memory layout,
+    /// which is the default.
     ///
     /// # Panics
     ///
@@ -700,6 +706,10 @@ impl<T> Grid<T> {
     /// assert_eq!(col_iter.next(), None);
     /// ```
     ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a column-major memory layout.
+    ///
     /// # Panics
     ///
     /// Panics if the row index is out of bounds.
@@ -731,6 +741,10 @@ impl<T> Grid<T> {
     /// *next.unwrap() = 10;
     /// assert_eq!(grid[(1, 0)], 10);
     /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a column-major memory layout.
     ///
     /// # Panics
     ///
@@ -2526,13 +2540,13 @@ mod test {
 
     #[test]
     fn macro2_empty() {
-        let grid: Grid<u8> = grid2![];
+        let grid: Grid<u8> = grid_cm![];
         test_grid(&grid, 0, 0, Order::ColumnMajor, &[]);
     }
 
     #[test]
     fn macro2_init() {
-        let grid = grid2![[1, 2, 3]
+        let grid = grid_cm![[1, 2, 3]
                           [4, 5, 6]
                           [7, 8, 9]];
         let expected = [1, 4, 7, 2, 5, 8, 3, 6, 9];
@@ -2541,13 +2555,13 @@ mod test {
 
     #[test]
     fn macro2_init_char() {
-        let grid = grid2![['a', 'b']['c', 'd']];
+        let grid = grid_cm![['a', 'b']['c', 'd']];
         test_grid(&grid, 2, 2, Order::ColumnMajor, &['a', 'c', 'b', 'd']);
     }
 
     #[test]
     fn macro2_one_row() {
-        let grid = grid2![[1, 2, 3, 4]];
+        let grid = grid_cm![[1, 2, 3, 4]];
         test_grid(&grid, 1, 4, Order::ColumnMajor, &[1, 2, 3, 4]);
     }
 
