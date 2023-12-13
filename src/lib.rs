@@ -1592,12 +1592,14 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn from_vec_panics_1() {
         let _: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 0);
     }
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn from_vec_panics_2() {
         let _: Grid<u8> = Grid::from_vec(vec![1, 2, 3], 2);
     }
@@ -1624,12 +1626,14 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn from_vec_with_order_panics_1() {
         let _: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3], 0, Order::ColumnMajor);
     }
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn from_vec_with_order_panics_2() {
         let _: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3], 2, Order::ColumnMajor);
     }
@@ -1651,6 +1655,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn insert_col_out_of_idx() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::RowMajor);
         grid.insert_col(3, vec![4, 5]);
@@ -1672,6 +1677,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn insert_col_out_of_idx_column_major() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 3, 2, 4], 2, Order::ColumnMajor);
         grid.insert_col(3, vec![4, 5]);
@@ -1700,6 +1706,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn insert_row_out_of_idx() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::RowMajor);
         grid.insert_row(3, vec![4, 5]);
@@ -1707,6 +1714,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn insert_row_wrong_size_of_idx() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::RowMajor);
         grid.insert_row(1, vec![4, 5, 4]);
@@ -1735,6 +1743,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn insert_row_out_of_idx_column_major() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::ColumnMajor);
         grid.insert_row(3, vec![4, 5]);
@@ -1742,6 +1751,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn insert_row_wrong_size_of_idx_column_major() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::ColumnMajor);
         grid.insert_row(1, vec![4, 5, 4]);
@@ -1950,6 +1960,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn idx_tup_out_of_col_bounds() {
         let grid: Grid<char> = grid![['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']['a', 'b', 'c', 'd']];
         let _ = grid[(0, 5)];
@@ -1993,6 +2004,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_col_wrong_size() {
         let mut grid: Grid<char> = grid![['a','a','a']['a','a','a']];
         grid.push_col(vec!['b']);
@@ -2001,6 +2013,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_col_zero_len() {
         let mut grid: Grid<char> = grid![];
         grid.push_col(vec![]);
@@ -2043,6 +2056,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_col_wrong_size_column_major() {
         let mut grid: Grid<char> = Grid::init_with_order(2, 3, Order::ColumnMajor, 'a');
         grid.push_col(vec!['b']);
@@ -2051,6 +2065,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_col_zero_len_column_major() {
         let mut grid: Grid<char> = Grid::new_with_order(0, 0, Order::ColumnMajor);
         grid.push_col(vec![]);
@@ -2072,6 +2087,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_empty_row() {
         let mut grid = Grid::init(0, 1, 0);
         grid.push_row(vec![]);
@@ -2079,6 +2095,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_row_wrong_size() {
         let mut grid: Grid<char> = grid![['a','a','a']['a','a','a']];
         grid.push_row(vec!['b']);
@@ -2101,6 +2118,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_empty_row_column_major() {
         let mut grid = Grid::init_with_order(0, 1, Order::ColumnMajor, 0);
         grid.push_row(vec![]);
@@ -2108,6 +2126,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn push_row_wrong_size_column_major() {
         let mut grid: Grid<char> =
             Grid::from_vec_with_order(vec!['a', 'a', 'a', 'a', 'a', 'a'], 3, Order::ColumnMajor);
@@ -2124,6 +2143,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_out_of_bound() {
         let grid = Grid::from_vec_with_order(vec![1, 2, 3, 4, 5, 6], 3, Order::RowMajor);
         let _ = grid.iter_row(3);
@@ -2131,6 +2151,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_zero() {
         let grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
         let _ = grid.iter_row(0);
@@ -2145,6 +2166,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_rowumn_major_out_of_bound() {
         let grid = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
         let _ = grid.iter_row(3);
@@ -2152,6 +2174,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_rowumn_major_zero() {
         let grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
         let _ = grid.iter_row(0);
@@ -2166,6 +2189,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_mut_out_of_bound() {
         let mut grid = Grid::from_vec_with_order(vec![1, 2, 3, 4, 5, 6], 3, Order::RowMajor);
         let _ = grid.iter_row_mut(3);
@@ -2173,6 +2197,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_mut_zero() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
         let _ = grid.iter_row_mut(0);
@@ -2187,6 +2212,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_mut_rowumn_major_out_of_bound() {
         let mut grid = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
         let _ = grid.iter_row_mut(3);
@@ -2194,6 +2220,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_row_mut_rowumn_major_zero() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
         let _ = grid.iter_row_mut(0);
@@ -2208,6 +2235,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_out_of_bound() {
         let grid = Grid::from_vec_with_order(vec![1, 2, 3, 4, 5, 6], 3, Order::RowMajor);
         let _ = grid.iter_col(3);
@@ -2215,6 +2243,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_zero() {
         let grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
         let _ = grid.iter_col(0);
@@ -2229,6 +2258,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_column_major_out_of_bound() {
         let grid = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
         let _ = grid.iter_col(3);
@@ -2236,6 +2266,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_column_major_zero() {
         let grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
         let _ = grid.iter_col(0);
@@ -2250,6 +2281,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_mut_out_of_bound() {
         let mut grid = Grid::from_vec_with_order(vec![1, 2, 3, 4, 5, 6], 3, Order::RowMajor);
         let _ = grid.iter_col_mut(3);
@@ -2257,6 +2289,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_mut_zero() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
         let _ = grid.iter_col_mut(0);
@@ -2271,6 +2304,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_mut_column_major_out_of_bound() {
         let mut grid = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
         let _ = grid.iter_col_mut(3);
@@ -2278,6 +2312,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn iter_col_mut_column_major_zero() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
         let _ = grid.iter_col_mut(0);
@@ -2365,31 +2400,31 @@ mod test {
     #[test]
     fn fmt_empty() {
         let grid: Grid<u8> = grid![];
-        assert_eq!(format!("{:?}", grid), "[]");
+        assert_eq!(format!("{grid:?}"), "[]");
     }
 
     #[test]
     fn fmt_row() {
         let grid: Grid<u8> = grid![[1, 2, 3]];
-        assert_eq!(format!("{:?}", grid), "[[1, 2, 3]]");
+        assert_eq!(format!("{grid:?}"), "[[1, 2, 3]]");
     }
 
     #[test]
     fn fmt_grid() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6][7,8,9]];
-        assert_eq!(format!("{:?}", grid), "[[1, 2, 3][4, 5, 6][7, 8, 9]]");
+        assert_eq!(format!("{grid:?}"), "[[1, 2, 3][4, 5, 6][7, 8, 9]]");
     }
 
     #[test]
     fn fmt_column_major() {
         let grid = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
-        assert_eq!(format!("{:?}", grid), "[[1, 2, 3][4, 5, 6]]");
+        assert_eq!(format!("{grid:?}"), "[[1, 2, 3][4, 5, 6]]");
     }
 
     #[test]
     fn fmt_pretty_empty() {
         let grid: Grid<f32> = grid![];
-        assert_eq!(format!("{:#?}", grid), "[]");
+        assert_eq!(format!("{grid:#?}"), "[]");
     }
 
     #[test]
@@ -2400,21 +2435,21 @@ mod test {
             [7,8,95]
         ];
 
-        let expected_output = r#"[
+        let expected_output = r"[
     [  1,  2,  3]
     [  4,  5,  6]
     [  7,  8, 95]
-]"#;
+]";
 
-        assert_eq!(format!("{:#?}", grid), expected_output);
+        assert_eq!(format!("{grid:#?}"), expected_output);
 
-        let expected_output = r#"[
+        let expected_output = r"[
     [   1,   2,   3]
     [   4,   5,   6]
     [   7,   8,  95]
-]"#;
+]";
 
-        assert_eq!(format!("{:#3?}", grid), expected_output);
+        assert_eq!(format!("{grid:#3?}"), expected_output);
     }
 
     #[test]
@@ -2425,21 +2460,21 @@ mod test {
             [7.1,8.23444,95.55]
         ];
 
-        let expected_output = r#"[
+        let expected_output = r"[
     [   1.5,   2.6,   3.4]
     [   4.8,   5.0,   6.0]
     [   7.1,   8.2,  95.6]
-]"#;
+]";
 
-        assert_eq!(format!("{:#5.1?}", grid), expected_output);
+        assert_eq!(format!("{grid:#5.1?}"), expected_output);
 
-        let expected_output = r#"[
+        let expected_output = r"[
     [  1.50000,  2.60000,  3.44000]
     [  4.77500,  5.00000,  6.00000]
     [  7.10000,  8.23444, 95.55000]
-]"#;
+]";
 
-        assert_eq!(format!("{:#8.5?}", grid), expected_output);
+        assert_eq!(format!("{grid:#8.5?}"), expected_output);
     }
 
     #[test]
@@ -2449,19 +2484,19 @@ mod test {
             [(80, 90), (5, 6)]
         ];
 
-        let expected_output = r#"[
+        let expected_output = r"[
     [ (        5,        66), (      432,        55)]
     [ (       80,        90), (        5,         6)]
-]"#;
+]";
 
         assert_eq!(format!("{grid:#?}"), expected_output);
 
-        let expected_output = r#"[
+        let expected_output = r"[
     [ (  5,  66), (432,  55)]
     [ ( 80,  90), (  5,   6)]
-]"#;
+]";
 
-        assert_eq!(format!("{:#3?}", grid), expected_output);
+        assert_eq!(format!("{grid:#3?}"), expected_output);
     }
 
     #[test]
@@ -2491,17 +2526,17 @@ mod test {
     [ Person { _name: "Sam", _precise_age: 8.99950 }, Person { _name: "John Doe", _precise_age: 40.14000 }]
 ]"#;
 
-        assert_eq!(format!("{:#5.5?}", grid), expected_output);
+        assert_eq!(format!("{grid:#5.5?}"), expected_output);
     }
 
     #[test]
     fn fmt_pretty_column_major() {
         let grid = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
-        let expected_output = r#"[
+        let expected_output = r"[
     [ 1, 2, 3]
     [ 4, 5, 6]
-]"#;
-        assert_eq!(format!("{:#?}", grid), expected_output);
+]";
+        assert_eq!(format!("{grid:#?}"), expected_output);
     }
 
     #[test]
@@ -2583,6 +2618,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn init_panics() {
         Grid::init(usize::MAX, 2, 3);
     }
@@ -2610,6 +2646,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn init_with_order_panics() {
         Grid::init_with_order(usize::MAX, 2, Order::ColumnMajor, 3);
     }
@@ -2631,6 +2668,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn new_panics() {
         let _: Grid<u8> = Grid::new(usize::MAX, 2);
     }
@@ -2652,6 +2690,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn new_with_order_panics() {
         let _: Grid<u8> = Grid::new_with_order(usize::MAX, 2, Order::ColumnMajor);
     }
@@ -2724,6 +2763,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn idx_tup_panic_1() {
         let grid = Grid::init(1, 2, 3);
         let _ = grid[(20, 0)];
@@ -2731,6 +2771,7 @@ mod test {
 
     #[test]
     #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
     fn idx_tup_panic_2() {
         let grid = Grid::init(1, 2, 3);
         let _ = grid[(0, 20)];
@@ -2771,6 +2812,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_rows() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         let max_by_row: Vec<u8> = grid
@@ -2785,6 +2827,7 @@ mod test {
     }
 
     #[test]
+    #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_cols() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         let max_by_col: Vec<u8> = grid
@@ -2795,7 +2838,7 @@ mod test {
 
         assert_eq!(max_by_col, vec![4, 5, 6]);
 
-        let sum_by_col: Vec<u8> = grid.iter_cols().map(|col| col.sum()).collect();
+        let sum_by_col: Vec<u8> = grid.iter_cols().map(|row| row.sum()).collect();
         assert_eq!(sum_by_col, vec![1 + 4, 2 + 5, 3 + 6]);
     }
 
