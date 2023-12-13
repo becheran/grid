@@ -1515,10 +1515,12 @@ impl<T: Eq> PartialEq for Grid<T> {
 
 impl<T: Eq> Eq for Grid<T> {}
 
+#[derive(Clone)]
 pub struct GridRowIter<'a, T> {
     grid: &'a Grid<T>,
     row_index: usize,
 }
+#[derive(Clone)]
 pub struct GridColIter<'a, T> {
     grid: &'a Grid<T>,
     col_index: usize,
@@ -2949,6 +2951,26 @@ mod test {
         grid.rotate_right();
         test_grid(&grid, 3, 2, Order::RowMajor, &[4, 1, 5, 2, 6, 3]);
         assert_eq!(grid, grid![[4,1][5,2][6,3]]);
+    }
+
+    #[test]
+    fn iter_cols_clone() {
+        let grid = grid![[1,2,3][4,5,6]];
+        let mut cols = grid.iter_cols().skip(1);
+        let c3: u8 = cols.clone().nth(1).unwrap().sum();
+        let c2: u8 = cols.next().unwrap().sum();
+        assert_eq!(c2, 2 + 5);
+        assert_eq!(c3, 3 + 6);
+    }
+
+    #[test]
+    fn iter_rows_clone() {
+        let grid = grid![[1,2,3][4,5,6][7,8,9]];
+        let mut rows = grid.iter_rows().skip(1);
+        let r3: u8 = rows.clone().nth(1).unwrap().sum();
+        let r2: u8 = rows.next().unwrap().sum();
+        assert_eq!(r2, 4 + 5 + 6);
+        assert_eq!(r3, 7 + 8 + 9);
     }
 
     #[cfg(feature = "serde")]
