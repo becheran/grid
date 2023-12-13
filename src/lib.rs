@@ -52,7 +52,6 @@ use serde::{
     ser::{Serialize, SerializeStruct, Serializer},
 };
 
-use core::cmp;
 use core::cmp::Eq;
 use core::fmt;
 use core::iter::StepBy;
@@ -60,6 +59,7 @@ use core::ops::Index;
 use core::ops::IndexMut;
 use core::slice::Iter;
 use core::slice::IterMut;
+use core::{cmp, convert::TryInto};
 
 #[doc(hidden)]
 #[macro_export]
@@ -516,9 +516,11 @@ impl<T> Grid<T> {
     /// Access a certain element in the grid.
     /// Returns `None` if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
-    pub fn get(&self, row: usize, col: usize) -> Option<&T> {
-        if row < self.rows && col < self.cols {
-            unsafe { Some(self.get_unchecked(row, col)) }
+    pub fn get<U: TryInto<usize>>(&self, row: U, col: U) -> Option<&T> {
+        let row_usize = row.try_into().ok()?;
+        let col_usize = col.try_into().ok()?;
+        if row_usize < self.rows && col_usize < self.cols {
+            unsafe { Some(self.get_unchecked(row_usize, col_usize)) }
         } else {
             None
         }
@@ -527,9 +529,11 @@ impl<T> Grid<T> {
     /// Mutable access to a certain element in the grid.
     /// Returns `None` if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
-    pub fn get_mut(&mut self, row: usize, col: usize) -> Option<&mut T> {
-        if row < self.rows && col < self.cols {
-            unsafe { Some(self.get_unchecked_mut(row, col)) }
+    pub fn get_mut<U: TryInto<usize>>(&mut self, row: U, col: U) -> Option<&mut T> {
+        let row_usize = row.try_into().ok()?;
+        let col_usize = col.try_into().ok()?;
+        if row_usize < self.rows && col_usize < self.cols {
+            unsafe { Some(self.get_unchecked_mut(row_usize, col_usize)) }
         } else {
             None
         }
