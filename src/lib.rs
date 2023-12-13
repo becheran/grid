@@ -1519,6 +1519,59 @@ impl<T: Eq> PartialEq for Grid<T> {
 
 impl<T: Eq> Eq for Grid<T> {}
 
+impl<T> From<Vec<Vec<T>>> for Grid<T> {
+    #[allow(clippy::redundant_closure_for_method_calls)]
+    fn from(vec: Vec<Vec<T>>) -> Self {
+        let cols = vec.first().map_or(0, |row| row.len());
+        Self::from_vec_with_order(vec.into_iter().flatten().collect(), cols, Order::default())
+    }
+}
+
+impl<T: Clone> From<&Vec<Vec<T>>> for Grid<T> {
+    #[allow(clippy::redundant_closure_for_method_calls)]
+    fn from(vec: &Vec<Vec<T>>) -> Self {
+        let cols = vec.first().map_or(0, |row| row.len());
+        Self::from_vec_with_order(
+            vec.clone().into_iter().flatten().collect(),
+            cols,
+            Order::default(),
+        )
+    }
+}
+
+impl<T: Clone> From<&Vec<&Vec<T>>> for Grid<T> {
+    #[allow(clippy::redundant_closure_for_method_calls)]
+    fn from(vec: &Vec<&Vec<T>>) -> Self {
+        let cols = vec.first().map_or(0, |row| row.len());
+        Self::from_vec_with_order(
+            vec.clone()
+                .into_iter()
+                .flat_map(|inner| inner.clone())
+                .collect(),
+            cols,
+            Order::default(),
+        )
+    }
+}
+
+impl<T> From<(Vec<T>, usize)> for Grid<T> {
+    fn from(value: (Vec<T>, usize)) -> Self {
+        Self::from_vec_with_order(value.0, value.1, Order::default())
+    }
+}
+
+impl<T: Clone> From<(&Vec<T>, usize)> for Grid<T> {
+    fn from(value: (&Vec<T>, usize)) -> Self {
+        Self::from_vec_with_order(value.0.clone(), value.1, Order::default())
+    }
+}
+
+impl<T: Clone> From<(&Vec<T>, &usize)> for Grid<T> {
+    fn from(value: (&Vec<T>, &usize)) -> Self {
+        Self::from_vec_with_order(value.0.clone(), *value.1, Order::default())
+    }
+}
+
 pub struct GridRowIter<'a, T> {
     grid: &'a Grid<T>,
     row_index: usize,
@@ -1576,6 +1629,100 @@ mod test {
         assert_eq!(grid.cols, cols, "number of cols is unexpected");
         assert_eq!(grid.order, order, "grid order is unexpected");
         assert_eq!(grid.data, data, "internal data is unexpected");
+    }
+
+    #[test]
+    fn from_1d_vec() {
+        let grid: Grid<u8> = Grid::from((vec![1, 2, 3], 1));
+        test_grid(&grid, 3, 1, Order::RowMajor, &[1, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_1d_vec_panic() {
+        let _: Grid<u8> = Grid::from((vec![1, 2, 3], 2));
+    }
+
+    #[test]
+    fn from_1d_vec_reference() {
+        let vec = vec![1, 2, 3];
+        let grid: Grid<u8> = Grid::from((&vec, 1));
+        test_grid(&grid, 3, 1, Order::RowMajor, &[1, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_1d_vec_reference_panic() {
+        let vec = vec![1, 2, 3];
+        let _: Grid<u8> = Grid::from((&vec, 2));
+    }
+
+    #[test]
+    fn from_1d_vec_reference_and_reference() {
+        let vec = vec![1, 2, 3];
+        let cols = 1;
+        let grid: Grid<u8> = Grid::from((&vec, &cols));
+        test_grid(&grid, 3, 1, Order::RowMajor, &[1, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_1d_vec_reference_and_reference_panic() {
+        let vec = vec![1, 2, 3];
+        let cols = 2;
+        let _: Grid<u8> = Grid::from((&vec, &cols));
+    }
+
+    #[test]
+    fn from_2d_vec() {
+        let grid: Grid<u8> = Grid::from(vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]]);
+        test_grid(&grid, 3, 3, Order::RowMajor, &[1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_2d_vec_panic() {
+        let _: Grid<u8> = Grid::from(vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8]]);
+    }
+
+    #[test]
+    fn from_2d_vec_reference() {
+        let vec = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8, 9]];
+        let grid: Grid<u8> = Grid::from(&vec);
+        test_grid(&grid, 3, 3, Order::RowMajor, &[1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_2d_vec_reference_panic() {
+        let vec = vec![vec![1, 2, 3], vec![4, 5, 6], vec![7, 8]];
+        let _: Grid<u8> = Grid::from(&vec);
+    }
+
+    #[test]
+    fn from_2d_vec_reference_of_references() {
+        let inner_vec1 = vec![1, 2, 3];
+        let inner_vec2 = vec![4, 5, 6];
+        let inner_vec3 = vec![7, 8, 9];
+        let vec = vec![&inner_vec1, &inner_vec2, &inner_vec3];
+        let grid: Grid<u8> = Grid::from(&vec);
+        test_grid(&grid, 3, 3, Order::RowMajor, &[1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_2d_vec_reference_of_references_panic() {
+        let inner_vec1 = vec![1, 2, 3];
+        let inner_vec2 = vec![4, 5, 6];
+        let inner_vec3 = vec![7, 8];
+        let vec = vec![&inner_vec1, &inner_vec2, &inner_vec3];
+        let _: Grid<u8> = Grid::from(&vec);
     }
 
     #[test]
