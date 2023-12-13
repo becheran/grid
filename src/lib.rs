@@ -495,8 +495,8 @@ impl<T> Grid<T> {
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     #[must_use]
-    pub unsafe fn get_unchecked(&self, row: usize, col: usize) -> &T {
-        let index = self.get_index(row, col);
+    pub unsafe fn get_unchecked<U: Into<usize>>(&self, row: U, col: U) -> &T {
+        let index = self.get_index(row.into(), col.into());
         self.data.get_unchecked(index)
     }
 
@@ -508,8 +508,8 @@ impl<T> Grid<T> {
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     #[must_use]
-    pub unsafe fn get_unchecked_mut(&mut self, row: usize, col: usize) -> &mut T {
-        let index = self.get_index(row, col);
+    pub unsafe fn get_unchecked_mut<U: Into<usize>>(&mut self, row: U, col: U) -> &mut T {
+        let index = self.get_index(row.into(), col.into());
         self.data.get_unchecked_mut(index)
     }
 
