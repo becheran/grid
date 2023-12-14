@@ -184,7 +184,7 @@ macro_rules! grid_cm {
 }
 
 /// Define the internal memory layout of the grid.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Order {
     /// The data is ordered row by row.
@@ -1425,6 +1425,16 @@ impl<T: Clone> Clone for Grid<T> {
     }
 }
 
+impl<T: std::hash::Hash> std::hash::Hash for Grid<T> {
+    #[inline]
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.rows.hash(state);
+        self.cols.hash(state);
+        self.order.hash(state);
+        self.data.hash(state);
+    }
+}
+
 impl<T> Index<(usize, usize)> for Grid<T> {
     type Output = T;
 
@@ -2509,6 +2519,15 @@ mod test {
         clone[(0, 2)] = 10;
         test_grid(&grid, 2, 3, Order::RowMajor, &[1, 2, 3, 4, 5, 6]);
         test_grid(&clone, 2, 3, Order::RowMajor, &[1, 2, 10, 4, 5, 6]);
+    }
+
+    #[test]
+    fn hash() {
+        let mut set = std::collections::HashSet::new();
+        set.insert(grid![[1,2,3][4,5,6]]);
+        set.insert(grid![[1,3,3][4,5,6]]);
+        set.insert(grid![[1,2,3][4,5,6]]);
+        assert_eq!(set.len(), 2);
     }
 
     #[test]
