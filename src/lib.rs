@@ -535,7 +535,7 @@ impl<T> Grid<T> {
         }
     }
 
-    /// Returns the size of the gird as a two element tuple.
+    /// Returns the size of the grid as a two element tuple.
     /// First element are the number of rows and the second the columns.
     #[must_use]
     pub fn size(&self) -> (usize, usize) {
