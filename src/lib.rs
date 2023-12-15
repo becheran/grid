@@ -55,6 +55,7 @@ use serde::{
 use core::cmp;
 use core::cmp::Eq;
 use core::fmt;
+use core::hash;
 use core::iter::StepBy;
 use core::ops::Index;
 use core::ops::IndexMut;
@@ -1425,9 +1426,9 @@ impl<T: Clone> Clone for Grid<T> {
     }
 }
 
-impl<T: std::hash::Hash> std::hash::Hash for Grid<T> {
+impl<T: hash::Hash> hash::Hash for Grid<T> {
     #[inline]
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.rows.hash(state);
         self.cols.hash(state);
         self.order.hash(state);
@@ -2519,8 +2520,9 @@ mod test {
         test_grid(&clone, 2, 3, Order::RowMajor, &[1, 2, 10, 4, 5, 6]);
     }
 
+    #[cfg(feature = "std")]
     #[test]
-    fn hash() {
+    fn hash_std() {
         let mut set = std::collections::HashSet::new();
         set.insert(grid![[1,2,3][4,5,6]]);
         set.insert(grid![[1,3,3][4,5,6]]);
