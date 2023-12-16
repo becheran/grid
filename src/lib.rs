@@ -496,7 +496,7 @@ impl<T> Grid<T> {
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     #[must_use]
-    pub unsafe fn get_unchecked<U: Into<usize>>(&self, row: U, col: U) -> &T {
+    pub unsafe fn get_unchecked(&self, row: impl Into<usize>, col: impl Into<usize>) -> &T {
         let index = self.get_index(row.into(), col.into());
         self.data.get_unchecked(index)
     }
@@ -509,7 +509,7 @@ impl<T> Grid<T> {
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     #[must_use]
-    pub unsafe fn get_unchecked_mut<U: Into<usize>>(&mut self, row: U, col: U) -> &mut T {
+    pub unsafe fn get_unchecked_mut(&mut self, row: impl Into<usize>, col: impl Into<usize>) -> &mut T {
         let index = self.get_index(row.into(), col.into());
         self.data.get_unchecked_mut(index)
     }
@@ -517,7 +517,7 @@ impl<T> Grid<T> {
     /// Access a certain element in the grid.
     /// Returns `None` if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
-    pub fn get<U: TryInto<usize>>(&self, row: U, col: U) -> Option<&T> {
+    pub fn get(&self, row: impl TryInto<usize>, col: impl TryInto<usize>) -> Option<&T> {
         let row_usize = row.try_into().ok()?;
         let col_usize = col.try_into().ok()?;
         if row_usize < self.rows && col_usize < self.cols {
@@ -530,7 +530,7 @@ impl<T> Grid<T> {
     /// Mutable access to a certain element in the grid.
     /// Returns `None` if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
-    pub fn get_mut<U: TryInto<usize>>(&mut self, row: U, col: U) -> Option<&mut T> {
+    pub fn get_mut(&mut self, row: impl TryInto<usize>, col: impl TryInto<usize>) -> Option<&mut T> {
         let row_usize = row.try_into().ok()?;
         let col_usize = col.try_into().ok()?;
         if row_usize < self.rows && col_usize < self.cols {
@@ -2877,7 +2877,7 @@ mod test {
     #[test]
     fn get() {
         let grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
-        assert_eq!(grid.get(0, 1), Some(&2));
+        assert_eq!(grid.get(0_i64, 1_i32), Some(&2));
     }
 
     #[test]
@@ -2901,7 +2901,7 @@ mod test {
     #[test]
     fn get_mut() {
         let mut grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
-        assert_eq!(grid.get_mut(0, 1), Some(&mut 2));
+        assert_eq!(grid.get_mut(0_i64, 1_i32), Some(&mut 2));
     }
 
     #[test]
