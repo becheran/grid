@@ -54,6 +54,7 @@ use serde::{
 
 use core::cmp::Eq;
 use core::fmt;
+use core::hash;
 use core::iter::StepBy;
 use core::ops::Index;
 use core::ops::IndexMut;
@@ -184,7 +185,7 @@ macro_rules! grid_cm {
 }
 
 /// Define the internal memory layout of the grid.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Order {
     /// The data is ordered row by row.
@@ -539,7 +540,7 @@ impl<T> Grid<T> {
         }
     }
 
-    /// Returns the size of the gird as a two element tuple.
+    /// Returns the size of the grid as a two element tuple.
     /// First element are the number of rows and the second the columns.
     #[must_use]
     pub fn size(&self) -> (usize, usize) {
@@ -1429,6 +1430,16 @@ impl<T: Clone> Clone for Grid<T> {
     }
 }
 
+impl<T: hash::Hash> hash::Hash for Grid<T> {
+    #[inline]
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.rows.hash(state);
+        self.cols.hash(state);
+        self.order.hash(state);
+        self.data.hash(state);
+    }
+}
+
 impl<T> Index<(usize, usize)> for Grid<T> {
     type Output = T;
 
@@ -1572,10 +1583,12 @@ impl<T: Clone> From<(&Vec<T>, &usize)> for Grid<T> {
     }
 }
 
+#[derive(Clone)]
 pub struct GridRowIter<'a, T> {
     grid: &'a Grid<T>,
     row_index: usize,
 }
+#[derive(Clone)]
 pub struct GridColIter<'a, T> {
     grid: &'a Grid<T>,
     col_index: usize,
@@ -2695,6 +2708,16 @@ mod test {
         test_grid(&clone, 2, 3, Order::RowMajor, &[1, 2, 10, 4, 5, 6]);
     }
 
+    #[cfg(feature = "std")]
+    #[test]
+    fn hash_std() {
+        let mut set = std::collections::HashSet::new();
+        set.insert(grid![[1,2,3][4,5,6]]);
+        set.insert(grid![[1,3,3][4,5,6]]);
+        set.insert(grid![[1,2,3][4,5,6]]);
+        assert_eq!(set.len(), 2);
+    }
+
     #[test]
     fn macro_init() {
         let grid = grid![[1, 2, 3][4, 5, 6]];
@@ -3143,6 +3166,26 @@ mod test {
         grid.rotate_right();
         test_grid(&grid, 3, 2, Order::RowMajor, &[4, 1, 5, 2, 6, 3]);
         assert_eq!(grid, grid![[4,1][5,2][6,3]]);
+    }
+
+    #[test]
+    fn iter_cols_clone() {
+        let grid = grid![[1,2,3][4,5,6]];
+        let mut cols = grid.iter_cols().skip(1);
+        let c3: u8 = cols.clone().nth(1).unwrap().sum();
+        let c2: u8 = cols.next().unwrap().sum();
+        assert_eq!(c2, 2 + 5);
+        assert_eq!(c3, 3 + 6);
+    }
+
+    #[test]
+    fn iter_rows_clone() {
+        let grid = grid![[1,2,3][4,5,6][7,8,9]];
+        let mut rows = grid.iter_rows().skip(1);
+        let r3: u8 = rows.clone().nth(1).unwrap().sum();
+        let r2: u8 = rows.next().unwrap().sum();
+        assert_eq!(r2, 4 + 5 + 6);
+        assert_eq!(r3, 7 + 8 + 9);
     }
 
     #[cfg(feature = "serde")]
