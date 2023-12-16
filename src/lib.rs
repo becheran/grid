@@ -509,7 +509,11 @@ impl<T> Grid<T> {
     /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
     #[inline]
     #[must_use]
-    pub unsafe fn get_unchecked_mut(&mut self, row: impl Into<usize>, col: impl Into<usize>) -> &mut T {
+    pub unsafe fn get_unchecked_mut(
+        &mut self,
+        row: impl Into<usize>,
+        col: impl Into<usize>,
+    ) -> &mut T {
         let index = self.get_index(row.into(), col.into());
         self.data.get_unchecked_mut(index)
     }
@@ -530,7 +534,11 @@ impl<T> Grid<T> {
     /// Mutable access to a certain element in the grid.
     /// Returns `None` if an element beyond the grid bounds is tried to be accessed.
     #[must_use]
-    pub fn get_mut(&mut self, row: impl TryInto<usize>, col: impl TryInto<usize>) -> Option<&mut T> {
+    pub fn get_mut(
+        &mut self,
+        row: impl TryInto<usize>,
+        col: impl TryInto<usize>,
+    ) -> Option<&mut T> {
         let row_usize = row.try_into().ok()?;
         let col_usize = col.try_into().ok()?;
         if row_usize < self.rows && col_usize < self.cols {
