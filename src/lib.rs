@@ -780,8 +780,8 @@ impl<T> Grid<T> {
 
     /// Traverse the grid with row and column indexes.
     ///
-    /// The iteration order is dependant on the internal memory layout,
-    /// but the indexes will be acurate either way.
+    /// The iteration order is dependent on the internal memory layout,
+    /// but the indexes will be accurate either way.
     ///
     /// # Examples
     ///
@@ -792,7 +792,7 @@ impl<T> Grid<T> {
     /// assert_eq!(iter.next(), Some(((0, 0), &1)));
     /// ```
     ///
-    /// Or simply unpack in a `for`  loop:
+    /// Or simply unpack in a `for` loop:
     ///
     /// ```
     /// use grid::*;
@@ -806,6 +806,50 @@ impl<T> Grid<T> {
             let position = match self.order {
                 Order::RowMajor => (idx / self.cols, idx % self.cols),
                 Order::ColumnMajor => (idx % self.rows, idx / self.rows),
+            };
+            (position, i)
+        })
+    }
+
+    /// Traverse the grid with row and column indexes,
+    /// and mutable access to each element.
+    ///
+    /// The iteration order is dependent on the internal memory layout,
+    /// but the indexes will be accurate either way.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1,2][3,4]];
+    /// let mut iter = grid.indexed_iter_mut();
+    /// assert_eq!(iter.next(), Some(((0, 0), &mut 1)));
+    /// ```
+    ///
+    /// Or simply unpack in a `for` loop:
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1,2][3,4]];
+    /// for ((row, col), i) in grid.indexed_iter_mut() {
+    ///     *i += 1;
+    ///     println!("value at row {row} and column {col} is: {i}");
+    /// }
+    /// 
+    /// assert_eq!(grid[(0, 0)], 2);
+    /// assert_eq!(grid[(0, 1)], 3);
+    /// assert_eq!(grid[(1, 0)], 4);
+    /// assert_eq!(grid[(1, 1)], 5);
+    /// ```
+    pub fn indexed_iter_mut(&mut self) -> impl Iterator<Item = ((usize, usize), &mut T)> {
+        let order = self.order;
+        let cols = self.cols;
+        let rows = self.rows;
+
+        self.data.iter_mut().enumerate().map(move |(idx, i)| {
+            let position = match order {
+                Order::RowMajor => (idx / cols, idx % cols),
+                Order::ColumnMajor => (idx % rows, idx / rows),
             };
             (position, i)
         })
@@ -2530,6 +2574,42 @@ mod test {
     fn indexed_iter_empty_column_major() {
         let grid: Grid<u8> = Grid::new_with_order(0, 0, Order::ColumnMajor);
         let mut iter = grid.indexed_iter();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_iter_mut() {
+        let mut grid: Grid<u8> = grid![[1,2][3,4]];
+        let mut iter = grid.indexed_iter_mut();
+        assert_eq!(iter.next(), Some(((0, 0), &mut 1)));
+        assert_eq!(iter.next(), Some(((0, 1), &mut 2)));
+        assert_eq!(iter.next(), Some(((1, 0), &mut 3)));
+        assert_eq!(iter.next(), Some(((1, 1), &mut 4)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_iter_mut_empty() {
+        let mut grid: Grid<u8> = Grid::new(0, 0);
+        let mut iter = grid.indexed_iter_mut();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_iter_mut_column_major() {
+        let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 3, 2, 4], 2, Order::ColumnMajor);
+        let mut iter = grid.indexed_iter_mut();
+        assert_eq!(iter.next(), Some(((0, 0), &mut 1)));
+        assert_eq!(iter.next(), Some(((1, 0), &mut 3)));
+        assert_eq!(iter.next(), Some(((0, 1), &mut 2)));
+        assert_eq!(iter.next(), Some(((1, 1), &mut 4)));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_iter_mut_empty_column_major() {
+        let mut grid: Grid<u8> = Grid::new_with_order(0, 0, Order::ColumnMajor);
+        let mut iter = grid.indexed_iter_mut();
         assert_eq!(iter.next(), None);
     }
 
