@@ -1471,6 +1471,17 @@ impl<T> Grid<T> {
     }
 }
 
+impl<T> Default for Grid<T> {
+    fn default() -> Self {
+        Self {
+            data: Vec::default(),
+            cols: 0,
+            rows: 0,
+            order: Order::default(),
+        }
+    }
+}
+
 impl<T: Clone> Clone for Grid<T> {
     fn clone(&self) -> Self {
         Grid {
