@@ -2182,6 +2182,19 @@ mod test {
     }
 
     #[test]
+    fn equal_partial_eq() {
+        let grid = grid![[1.0]];
+        let grid2 = Grid::from_vec(vec![1.0], 1);
+        assert_eq!(grid, grid2);
+    }
+
+    #[test]
+    fn ne_partial_eq() {
+        let grid = grid![[f64::NAN]];
+        assert_ne!(grid, grid);
+    }
+
+    #[test]
     #[should_panic]
     #[allow(clippy::should_panic_without_expect)]
     fn idx_tup_out_of_col_bounds() {
