@@ -1574,7 +1574,7 @@ impl<T: fmt::Debug> fmt::Debug for Grid<T> {
     }
 }
 
-impl<T: Eq> PartialEq for Grid<T> {
+impl<T: PartialEq> PartialEq for Grid<T> {
     fn eq(&self, other: &Self) -> bool {
         if self.rows != other.rows || self.cols != other.cols {
             return false;
