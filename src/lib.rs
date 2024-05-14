@@ -1445,7 +1445,7 @@ impl<T> Grid<T> {
         GridRowIter {
             grid: self,
             row_start_index: 0,
-            row_end_index: self.rows-1,
+            row_end_index: self.rows,
         }
     }
 
@@ -1467,7 +1467,8 @@ impl<T> Grid<T> {
     pub fn iter_cols(&self) -> GridColIter<'_, T> {
         GridColIter {
             grid: self,
-            col_index: 0,
+            col_start_index: 0,
+            col_end_index: self.cols,
         }
     }
 }
@@ -1657,7 +1658,8 @@ pub struct GridRowIter<'a, T> {
 #[derive(Clone, Debug)]
 pub struct GridColIter<'a, T> {
     grid: &'a Grid<T>,
-    col_index: usize,
+    col_start_index: usize,
+    col_end_index: usize,
 }
 
 impl<'a, T> Iterator for GridRowIter<'a, T> {
@@ -1674,7 +1676,7 @@ impl<'a, T> Iterator for GridRowIter<'a, T> {
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.row_end_index - self.row_start_index + 1;
+        let size = self.row_end_index - self.row_start_index;
         (size, Some(size))
     }
 }
@@ -1687,7 +1689,7 @@ impl<'a, T> DoubleEndedIterator for GridRowIter<'a, T> {
             return None;
         }
 
-        let row_iter = self.grid.iter_row(self.row_end_index);
+        let row_iter = self.grid.iter_row(self.row_end_index - 1);
         self.row_end_index -= 1;
         Some(row_iter)
     }
@@ -1697,21 +1699,18 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
     type Item = StepBy<Iter<'a, T>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let cols = self.grid.cols();
-        let col_index = self.col_index;
-
-        if !(0..cols).contains(&col_index) {
+        if self.col_start_index >= self.col_end_index {
             return None;
         }
 
-        let row_iter = self.grid.iter_col(col_index);
-        self.col_index += 1;
-        Some(row_iter)
+        let col_iter = self.grid.iter_col(self.col_start_index);
+        self.col_start_index += 1;
+        Some(col_iter)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let cols = self.grid.cols();
-        (cols, Some(cols))
+        let size = self.col_end_index - self.col_start_index;
+        (size, Some(size))
     }
 }
 
@@ -1719,16 +1718,13 @@ impl<'a, T> ExactSizeIterator for GridColIter<'a, T> { }
 
 impl<'a, T> DoubleEndedIterator for GridColIter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        let cols = self.grid.cols();
-        let col_index = self.col_index;
-
-        if !(0..cols).contains(&col_index) {
+        if self.col_start_index >= self.col_end_index {
             return None;
         }
 
-        let row_iter = self.grid.iter_col(col_index);
-        self.col_index -= 1;
-        Some(row_iter)
+        let col_iter = self.grid.iter_col(self.col_end_index - 1);
+        self.col_end_index -= 1;
+        Some(col_iter)
     }
 }
 
@@ -3154,13 +3150,28 @@ mod test {
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_rows_rev() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
-        print!("grid: {grid:?}");
-        let mut row_iter: core::iter::Rev<GridRowIter<'_, u8>> = grid.iter_rows().rev();
-        print!("rev iter: {row_iter:?}");
-        assert!(row_iter.next().unwrap().eq([4,5,7].iter()));
-        print!("row 1 success");
-        assert!(row_iter.next().unwrap().eq([1,2,3].iter()));
-        print!("row 0 success");
+        let max_by_row: Vec<u8> = grid
+            .iter_rows()
+            .rev()
+            .map(|row| row.max().unwrap())
+            .copied()
+            .collect();
+        assert_eq!(max_by_row, vec![6, 3]);
+
+        let sum_by_row: Vec<u8> = grid.iter_rows().rev().map(|row| row.sum()).collect();
+        assert_eq!(sum_by_row, vec![4 + 5 + 6, 1 + 2 + 3]);
+    }
+
+    #[test]
+    fn iter_rows_exact_size() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows();
+        assert_eq!(row_iter.len(), 2);
+        assert!(row_iter.next().is_some());
+        assert_eq!(row_iter.len(), 1);
+        assert!(row_iter.next().is_some());
+        assert_eq!(row_iter.len(), 0);
+        assert!(row_iter.next().is_none());
     }
 
     #[test]
@@ -3177,6 +3188,37 @@ mod test {
 
         let sum_by_col: Vec<u8> = grid.iter_cols().map(|row| row.sum()).collect();
         assert_eq!(sum_by_col, vec![1 + 4, 2 + 5, 3 + 6]);
+    }
+
+    #[test]
+    #[allow(clippy::redundant_closure_for_method_calls)]
+    fn iter_cols_rev() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let max_by_col: Vec<u8> = grid
+            .iter_cols()
+            .rev()
+            .map(|col| col.max().unwrap())
+            .copied()
+            .collect();
+
+        assert_eq!(max_by_col, vec![6, 5, 4]);
+
+        let sum_by_col: Vec<u8> = grid.iter_cols().rev().map(|row| row.sum()).collect();
+        assert_eq!(sum_by_col, vec![3 + 6, 2 + 5, 1 + 4]);
+    }
+
+    #[test]
+    fn iter_cols_exact_size() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols();
+        assert_eq!(col_iter.len(), 3);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 2);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 1);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 0);
+        assert!(col_iter.next().is_none());
     }
 
     #[test]
