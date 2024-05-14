@@ -835,7 +835,7 @@ impl<T> Grid<T> {
     ///     *i += 1;
     ///     println!("value at row {row} and column {col} is: {i}");
     /// }
-    /// 
+    ///
     /// assert_eq!(grid[(0, 0)], 2);
     /// assert_eq!(grid[(0, 1)], 3);
     /// assert_eq!(grid[(1, 0)], 4);
@@ -1681,7 +1681,7 @@ impl<'a, T> Iterator for GridRowIter<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for GridRowIter<'a, T> { }
+impl<'a, T> ExactSizeIterator for GridRowIter<'a, T> {}
 
 impl<'a, T> DoubleEndedIterator for GridRowIter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
@@ -1714,7 +1714,7 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for GridColIter<'a, T> { }
+impl<'a, T> ExactSizeIterator for GridColIter<'a, T> {}
 
 impl<'a, T> DoubleEndedIterator for GridColIter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
