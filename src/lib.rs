@@ -1444,7 +1444,8 @@ impl<T> Grid<T> {
     pub fn iter_rows(&self) -> GridRowIter<'_, T> {
         GridRowIter {
             grid: self,
-            row_index: 0,
+            row_start_index: 0,
+            row_end_index: self.rows-1,
         }
     }
 
@@ -1646,12 +1647,14 @@ impl<T: Clone> From<(&Vec<T>, &usize)> for Grid<T> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct GridRowIter<'a, T> {
     grid: &'a Grid<T>,
-    row_index: usize,
+    row_start_index: usize,
+    row_end_index: usize,
 }
-#[derive(Clone)]
+
+#[derive(Clone, Debug)]
 pub struct GridColIter<'a, T> {
     grid: &'a Grid<T>,
     col_index: usize,
@@ -1661,15 +1664,31 @@ impl<'a, T> Iterator for GridRowIter<'a, T> {
     type Item = StepBy<Iter<'a, T>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let rows = self.grid.rows();
-        let row_index = self.row_index;
-
-        if !(0..rows).contains(&row_index) {
+        if self.row_start_index >= self.row_end_index {
             return None;
         }
 
-        let row_iter = self.grid.iter_row(row_index);
-        self.row_index += 1;
+        let row_iter = self.grid.iter_row(self.row_start_index);
+        self.row_start_index += 1;
+        Some(row_iter)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let size = self.row_end_index - self.row_start_index + 1;
+        (size, Some(size))
+    }
+}
+
+impl<'a, T> ExactSizeIterator for GridRowIter<'a, T> { }
+
+impl<'a, T> DoubleEndedIterator for GridRowIter<'a, T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.row_start_index >= self.row_end_index {
+            return None;
+        }
+
+        let row_iter = self.grid.iter_row(self.row_end_index);
+        self.row_end_index -= 1;
         Some(row_iter)
     }
 }
@@ -1687,6 +1706,28 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
 
         let row_iter = self.grid.iter_col(col_index);
         self.col_index += 1;
+        Some(row_iter)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let cols = self.grid.cols();
+        (cols, Some(cols))
+    }
+}
+
+impl<'a, T> ExactSizeIterator for GridColIter<'a, T> { }
+
+impl<'a, T> DoubleEndedIterator for GridColIter<'a, T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let cols = self.grid.cols();
+        let col_index = self.col_index;
+
+        if !(0..cols).contains(&col_index) {
+            return None;
+        }
+
+        let row_iter = self.grid.iter_col(col_index);
+        self.col_index -= 1;
         Some(row_iter)
     }
 }
@@ -3097,6 +3138,7 @@ mod test {
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_rows() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        print!("grid: {grid:?}");
         let max_by_row: Vec<u8> = grid
             .iter_rows()
             .map(|row| row.max().unwrap())
@@ -3106,6 +3148,19 @@ mod test {
 
         let sum_by_row: Vec<u8> = grid.iter_rows().map(|row| row.sum()).collect();
         assert_eq!(sum_by_row, vec![1 + 2 + 3, 4 + 5 + 6]);
+    }
+
+    #[test]
+    #[allow(clippy::redundant_closure_for_method_calls)]
+    fn iter_rows_rev() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        print!("grid: {grid:?}");
+        let mut row_iter: core::iter::Rev<GridRowIter<'_, u8>> = grid.iter_rows().rev();
+        print!("rev iter: {row_iter:?}");
+        assert!(row_iter.next().unwrap().eq([4,5,7].iter()));
+        print!("row 1 success");
+        assert!(row_iter.next().unwrap().eq([1,2,3].iter()));
+        print!("row 0 success");
     }
 
     #[test]
