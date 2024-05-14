@@ -1648,14 +1648,14 @@ impl<T: Clone> From<(&Vec<T>, &usize)> for Grid<T> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct GridRowIter<'a, T> {
     grid: &'a Grid<T>,
     row_start_index: usize,
     row_end_index: usize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct GridColIter<'a, T> {
     grid: &'a Grid<T>,
     col_start_index: usize,
@@ -3134,7 +3134,6 @@ mod test {
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_rows() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
-        print!("grid: {grid:?}");
         let max_by_row: Vec<u8> = grid
             .iter_rows()
             .map(|row| row.max().unwrap())
