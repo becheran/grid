@@ -1471,6 +1471,32 @@ impl<T> Grid<T> {
             col_end_index: self.cols,
         }
     }
+
+    /// Swaps two elements in the Grid.
+    /// Similar to `Vec::swap()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if either index is out of bounds.
+    pub fn swap(&mut self, (row_a, col_a): (usize, usize), (row_b, col_b): (usize, usize)) {
+        assert!(
+            !(row_a >= self.rows || col_a >= self.cols),
+            "grid index out of bounds: ({row_a},{col_a}) out of ({},{})",
+            self.rows,
+            self.cols
+        );
+        assert!(
+            !(row_b >= self.rows || col_b >= self.cols),
+            "grid index out of bounds: ({row_b},{col_b}) out of ({},{})",
+            self.rows,
+            self.cols
+        );
+
+        let a_idx = self.get_index(row_a, col_a);
+        let b_idx = self.get_index(row_b, col_b);
+
+        self.data.swap(a_idx, b_idx);
+    }
 }
 
 impl<T> Default for Grid<T> {
@@ -3394,6 +3420,21 @@ mod test {
         let r2: u8 = rows.next().unwrap().sum();
         assert_eq!(r2, 4 + 5 + 6);
         assert_eq!(r3, 7 + 8 + 9);
+    }
+
+    #[test]
+    fn swap() {
+        let mut grid = grid![[1,2][4,5]];
+        grid.swap((0, 0), (1, 0));
+        let end_grid = grid![[4,2][1,5]];
+        assert_eq!(grid, end_grid);
+    }
+
+    #[test]
+    #[should_panic(expected = "grid index out of bounds: (2,0) out of (2,2)")]
+    fn swap_out_of_bounds() {
+        let mut grid = grid![[1,2][4,5]];
+        grid.swap((0, 0), (2, 0));
     }
 
     #[cfg(feature = "serde")]
