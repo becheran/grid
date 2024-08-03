@@ -412,6 +412,30 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Initialises an empty Grid with the capacity to store `cols * rows` elements.
+    /// Similar to `Vec::with_capacity`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `rows * cols > usize::MAX` or if `rows * cols * size_of::<T>() > isize::MAX`
+    pub fn with_capacity(rows: usize, cols: usize) -> Self {
+        Self::with_capacity_and_order(rows, cols, Order::default())
+    }
+
+    /// Same as [`with_capacity`](Self::with_capacity) but with a specified [`Order`]
+    ///
+    /// # Panics
+    ///
+    /// Panics if `rows * cols > usize::MAX` or if `rows * cols * size_of::<T>() > isize::MAX`
+    pub fn with_capacity_and_order(rows: usize, cols: usize, order: Order) -> Self {
+        Self {
+            data: Vec::with_capacity(rows.checked_mul(cols).unwrap()),
+            cols: 0,
+            rows: 0,
+            order,
+        }
+    }
+
     /// Returns a grid from a vector with a given column length.
     /// The length of `vec` must be a multiple of `cols`.
     ///
@@ -3047,6 +3071,49 @@ mod test {
 
         let grid: Grid<u8> = Grid::new_with_order(3, 0, Order::ColumnMajor);
         test_grid(&grid, 0, 0, Order::ColumnMajor, &[]);
+    }
+
+    #[test]
+    fn with_capacity() {
+        // doesn't impl Default
+        struct Foo();
+
+        let grid: Grid<Foo> = Grid::with_capacity(20, 20);
+        assert!(grid.is_empty());
+        assert_eq!(grid.order(), Order::default());
+    }
+
+    #[test]
+    fn with_capacity_and_order() {
+        // doesn't impl Default
+        struct Foo();
+
+        let grid: Grid<Foo> = Grid::with_capacity_and_order(20, 20, Order::ColumnMajor);
+        assert!(grid.is_empty());
+        assert_eq!(grid.order(), Order::ColumnMajor);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn with_capacity_panics_internal() {
+        // doesn't impl Default
+        struct Foo();
+
+        let _grid: Grid<Foo> = Grid::with_capacity_and_order(usize::MAX, 2, Order::RowMajor);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn with_capacity_panics_vec() {
+        let rows: usize = isize::MAX.try_into().expect("isize::MAX is positive");
+        assert!(
+            core::mem::size_of::<u8>() * rows < usize::MAX,
+            "shows that panic is from Vec::with_capacity, not internal check"
+        );
+
+        let _grid: Grid<u8> = Grid::with_capacity_and_order(rows, 2, Order::RowMajor);
     }
 
     #[test]
