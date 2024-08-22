@@ -550,6 +550,62 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Access a certain row on the grid.
+    /// Returns `None` if a row beyond the grid bounds is tried to be accessed,
+    /// or if the grid is column-major.
+    #[must_use]
+    pub fn get_row(&self, row: impl TryInto<usize>) -> Option<&[T]> {
+        let row_usize = row.try_into().ok()?;
+        if row_usize < self.rows && self.order == Order::RowMajor {
+            let start = row_usize * self.cols;
+            Some(self.data[start..(start + self.cols)].as_ref())
+        } else {
+            None
+        }
+    }
+
+    /// Mutable access to a certain row on the grid.
+    /// Returns `None` if a row beyond the grid bounds is tried to be accessed,
+    /// or if the grid is column-major.
+    #[must_use]
+    pub fn get_mut_row(&mut self, row: impl TryInto<usize>) -> Option<&mut [T]> {
+        let row_usize = row.try_into().ok()?;
+        if row_usize < self.rows && self.order == Order::RowMajor {
+            let start = row_usize * self.cols;
+            Some(self.data[start..(start + self.cols)].as_mut())
+        } else {
+            None
+        }
+    }
+
+    /// Access a certain column on the grid.
+    /// Returns `None` if a column beyond the grid bounds is tried to be accessed,
+    /// or if the grid is row-major.
+    #[must_use]
+    pub fn get_col(&self, column: impl TryInto<usize>) -> Option<&[T]> {
+        let column_usize = column.try_into().ok()?;
+        if column_usize < self.cols && self.order == Order::ColumnMajor {
+            let start = column_usize * self.rows;
+            Some(self.data[start..(start + self.rows)].as_ref())
+        } else {
+            None
+        }
+    }
+
+    /// Mutable access to a certain column on the grid.
+    /// Returns `None` if a column beyond the grid bounds is tried to be accessed,
+    /// or if the grid is row-major.
+    #[must_use]
+    pub fn get_mut_col(&mut self, column: impl TryInto<usize>) -> Option<&mut [T]> {
+        let column_usize = column.try_into().ok()?;
+        if column_usize < self.cols && self.order == Order::ColumnMajor {
+            let start = column_usize * self.rows;
+            Some(self.data[start..(start + self.rows)].as_mut())
+        } else {
+            None
+        }
+    }
+
     /// Returns the size of the grid as a two element tuple.
     /// First element are the number of rows and the second the columns.
     #[must_use]
@@ -3076,6 +3132,54 @@ mod test {
     }
 
     #[test]
+    fn get_row() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
+        assert_eq!(grid.get_row(0), Some([1, 2].as_slice()));
+    }
+
+    #[test]
+    fn get_row_column_major() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_row(0), None);
+    }
+
+    #[test]
+    fn get_row_none() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
+        assert_eq!(grid.get_row(1), None);
+    }
+
+    #[test]
+    fn get_row_none_column_major() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_row(1), None);
+    }
+
+    #[test]
+    fn get_col() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_col(0), Some([1, 2].as_slice()));
+    }
+
+    #[test]
+    fn get_col_row_major() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::RowMajor);
+        assert_eq!(grid.get_col(0), None);
+    }
+
+    #[test]
+    fn get_col_none() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_col(1), None);
+    }
+
+    #[test]
+    fn get_col_none_column_major() {
+        let grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::RowMajor);
+        assert_eq!(grid.get_col(1), None);
+    }
+
+    #[test]
     fn get_mut() {
         let mut grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
         assert_eq!(grid.get_mut(0_i64, 1_i32), Some(&mut 2));
@@ -3097,6 +3201,54 @@ mod test {
     fn get_mut_none_column_major() {
         let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
         assert_eq!(grid.get_mut(0, 1), None);
+    }
+
+    #[test]
+    fn get_mut_col() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_mut_col(0), Some([1, 2].as_mut_slice()));
+    }
+
+    #[test]
+    fn get_mut_col_row_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::RowMajor);
+        assert_eq!(grid.get_mut_col(0), None);
+    }
+
+    #[test]
+    fn get_mut_col_none() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_mut_col(1), None);
+    }
+
+    #[test]
+    fn get_mut_col_none_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::RowMajor);
+        assert_eq!(grid.get_mut_col(1), None);
+    }
+
+    #[test]
+    fn get_mut_row() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
+        assert_eq!(grid.get_mut_row(0), Some([1, 2].as_mut_slice()));
+    }
+
+    #[test]
+    fn get_mut_row_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_mut_row(0), None);
+    }
+
+    #[test]
+    fn get_mut_row_none() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
+        assert_eq!(grid.get_mut_row(1), None);
+    }
+
+    #[test]
+    fn get_mut_row_none_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 1, Order::ColumnMajor);
+        assert_eq!(grid.get_mut_row(1), None);
     }
 
     #[test]
