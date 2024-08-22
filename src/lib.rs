@@ -52,15 +52,15 @@ use serde::{
     ser::{Serialize, SerializeStruct, Serializer},
 };
 
-use core::cmp::Eq;
-use core::fmt;
-use core::hash;
-use core::iter::StepBy;
-use core::ops::Index;
-use core::ops::IndexMut;
-use core::slice::Iter;
-use core::slice::IterMut;
-use core::{cmp, convert::TryInto};
+use core::{
+    cmp,
+    cmp::Eq,
+    convert::TryInto,
+    fmt, hash,
+    iter::StepBy,
+    ops::{Index, IndexMut},
+    slice::{Iter, IterMut},
+};
 
 #[doc(hidden)]
 #[macro_export]
@@ -321,7 +321,7 @@ impl<T> Grid<T> {
     ///
     /// ```
     /// use grid::Grid;
-    /// let grid : Grid<u8> = Grid::new(2,3);
+    /// let grid: Grid<u8> = Grid::new(2, 3);
     /// assert_eq!(grid[(0, 0)], 0);
     /// ```
     ///
@@ -422,7 +422,7 @@ impl<T> Grid<T> {
     ///
     /// ```
     /// use grid::Grid;
-    /// let grid = Grid::from_vec(vec![1,2,3,4,5,6], 3);
+    /// let grid = Grid::from_vec(vec![1, 2, 3, 4, 5, 6], 3);
     /// assert_eq!(grid.size(), (2, 3));
     /// ```
     ///
@@ -434,7 +434,7 @@ impl<T> Grid<T> {
     ///
     /// ``` should_panic
     /// use grid::Grid;
-    /// Grid::from_vec(vec![1,2,3,4,5], 3);
+    /// Grid::from_vec(vec![1, 2, 3, 4, 5], 3);
     /// ```
     ///
     /// # Panics
@@ -493,7 +493,8 @@ impl<T> Grid<T> {
     ///
     /// # Safety
     ///
-    /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
+    /// Calling this method with an out-of-bounds index is undefined behavior even
+    /// if the resulting reference is not used.
     #[inline]
     #[must_use]
     pub unsafe fn get_unchecked(&self, row: impl Into<usize>, col: impl Into<usize>) -> &T {
@@ -506,7 +507,8 @@ impl<T> Grid<T> {
     ///
     /// # Safety
     ///
-    /// Calling this method with an out-of-bounds index is undefined behavior even if the resulting reference is not used.
+    /// Calling this method with an out-of-bounds index is undefined behavior even
+    /// if the resulting reference is not used.
     #[inline]
     #[must_use]
     pub unsafe fn get_unchecked_mut(
@@ -577,7 +579,7 @@ impl<T> Grid<T> {
     /// For example:
     /// ```
     /// use grid::*;
-    /// let grid : Grid<u8> = grid![];
+    /// let grid: Grid<u8> = grid![];
     /// assert!(grid.is_empty());
     /// ```
     #[must_use]
@@ -875,7 +877,7 @@ impl<T> Grid<T> {
     /// ```
     /// use grid::*;
     /// let mut grid: Grid<u8> = grid![];
-    /// let row = vec![1,2,3];
+    /// let row = vec![1, 2, 3];
     /// grid.push_row(row);
     /// assert_eq!(grid.size(), (1, 3));
     /// ```
@@ -929,7 +931,7 @@ impl<T> Grid<T> {
     /// ```
     /// use grid::*;
     /// let mut grid: Grid<u8> = grid![];
-    /// let col = vec![1,2,3];
+    /// let col = vec![1, 2, 3];
     /// grid.push_col(col);
     /// assert_eq!(grid.size(), (3, 1));
     /// ```
@@ -1336,8 +1338,8 @@ impl<T> Grid<T> {
     ///
     /// # Performance
     ///
-    /// This method will be significantly slower if the grid initialy uses a column-major memory layout,
-    /// which is the default.
+    /// This method will be significantly slower if the grid initialy uses a
+    /// column-major memory layout, which is the default.
     pub fn rotate_left(&mut self) {
         self.transpose();
         self.flip_rows();
@@ -1358,8 +1360,8 @@ impl<T> Grid<T> {
     ///
     /// # Performance
     ///
-    /// This method will be significantly slower if the grid initialy uses a row-major memory layout,
-    /// which is the default.
+    /// This method will be significantly slower if the grid initialy uses a
+    /// row-major memory layout, which is the default.
     pub fn rotate_right(&mut self) {
         self.transpose();
         self.flip_cols();
