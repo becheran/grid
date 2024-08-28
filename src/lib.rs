@@ -1786,6 +1786,22 @@ impl<T: Clone> From<(&Vec<T>, &usize)> for Grid<T> {
     }
 }
 
+impl<'a, T> IntoIterator for &'a Grid<T> {
+    type IntoIter = std::slice::Iter<'a, T>;
+    type Item = &'a T;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Grid<T> {
+    type IntoIter = std::slice::IterMut<'a, T>;
+    type Item = &'a mut T;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
 #[derive(Clone)]
 pub struct GridRowIter<'a, T> {
     grid: &'a Grid<T>,
