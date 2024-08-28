@@ -53,13 +53,12 @@ use serde::{
 };
 
 use core::{
-    cmp,
-    cmp::Eq,
+    cmp::{self, Eq},
     convert::TryInto,
     fmt, hash,
     iter::StepBy,
     ops::{Index, IndexMut},
-    slice::{Iter, IterMut},
+    slice::{ChunksExact, ChunksExactMut, Iter, IterMut},
 };
 
 #[doc(hidden)]
@@ -1510,9 +1509,7 @@ impl<T> Grid<T> {
     /// Iterate over the rows of the grid as slices. It only holds meaning if the grid
     /// is row-major.
     #[must_use]
-    pub fn iter_rows_as_slices(
-        &self,
-    ) -> Option<impl DoubleEndedIterator<Item = &[T]> + ExactSizeIterator<Item = &[T]>> {
+    pub fn iter_rows_as_slices(&self) -> Option<ChunksExact<T>> {
         if self.order == Order::RowMajor {
             Some(self.data.chunks_exact(self.cols))
         } else {
@@ -1523,10 +1520,7 @@ impl<T> Grid<T> {
     /// Iterate over the rows of the grid as slices. It only holds meaning if the grid
     /// is row-major.
     #[must_use]
-    pub fn iter_rows_as_slices_mut(
-        &mut self,
-    ) -> Option<impl DoubleEndedIterator<Item = &mut [T]> + ExactSizeIterator<Item = &mut [T]>>
-    {
+    pub fn iter_rows_as_slices_mut(&mut self) -> Option<ChunksExactMut<T>> {
         if self.order == Order::RowMajor {
             Some(self.data.chunks_exact_mut(self.cols))
         } else {
@@ -1560,9 +1554,7 @@ impl<T> Grid<T> {
     /// Iterate over the columns of the grid as slices. It only holds meaning if the
     /// grid is column-major.
     #[must_use]
-    pub fn iter_cols_as_slices(
-        &self,
-    ) -> Option<impl DoubleEndedIterator<Item = &[T]> + ExactSizeIterator<Item = &[T]>> {
+    pub fn iter_cols_as_slices(&self) -> Option<ChunksExact<T>> {
         if self.order == Order::ColumnMajor {
             Some(self.data.chunks_exact(self.rows))
         } else {
@@ -1573,10 +1565,7 @@ impl<T> Grid<T> {
     /// Iterate over the columns of the grid as slices. It only holds meaning if the
     /// grid is column-major.
     #[must_use]
-    pub fn iter_cols_as_slices_mut(
-        &mut self,
-    ) -> Option<impl DoubleEndedIterator<Item = &mut [T]> + ExactSizeIterator<Item = &mut [T]>>
-    {
+    pub fn iter_cols_as_slices_mut(&mut self) -> Option<ChunksExactMut<T>> {
         if self.order == Order::ColumnMajor {
             Some(self.data.chunks_exact_mut(self.rows))
         } else {
