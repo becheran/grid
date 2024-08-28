@@ -1507,6 +1507,33 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Iterate over the rows of the grid as slices. It only holds meaning if the grid
+    /// is row-major.
+    #[must_use]
+    pub fn iter_rows_as_slices(
+        &self,
+    ) -> Option<impl DoubleEndedIterator<Item = &[T]> + ExactSizeIterator<Item = &[T]>> {
+        if self.order == Order::RowMajor {
+            Some(self.data.chunks_exact(self.cols))
+        } else {
+            None
+        }
+    }
+
+    /// Iterate over the rows of the grid as slices. It only holds meaning if the grid
+    /// is row-major.
+    #[must_use]
+    pub fn iter_rows_as_slices_mut(
+        &mut self,
+    ) -> Option<impl DoubleEndedIterator<Item = &mut [T]> + ExactSizeIterator<Item = &mut [T]>>
+    {
+        if self.order == Order::RowMajor {
+            Some(self.data.chunks_exact_mut(self.cols))
+        } else {
+            None
+        }
+    }
+
     /// Iterate over the columns of the grid. Each time an iterator over a single
     /// column is returned.
     ///
@@ -1527,6 +1554,33 @@ impl<T> Grid<T> {
             grid: self,
             col_start_index: 0,
             col_end_index: self.cols,
+        }
+    }
+
+    /// Iterate over the columns of the grid as slices. It only holds meaning if the
+    /// grid is column-major.
+    #[must_use]
+    pub fn iter_cols_as_slices(
+        &self,
+    ) -> Option<impl DoubleEndedIterator<Item = &[T]> + ExactSizeIterator<Item = &[T]>> {
+        if self.order == Order::ColumnMajor {
+            Some(self.data.chunks_exact(self.rows))
+        } else {
+            None
+        }
+    }
+
+    /// Iterate over the columns of the grid as slices. It only holds meaning if the
+    /// grid is column-major.
+    #[must_use]
+    pub fn iter_cols_as_slices_mut(
+        &mut self,
+    ) -> Option<impl DoubleEndedIterator<Item = &mut [T]> + ExactSizeIterator<Item = &mut [T]>>
+    {
+        if self.order == Order::ColumnMajor {
+            Some(self.data.chunks_exact_mut(self.rows))
+        } else {
+            None
         }
     }
 
@@ -3354,6 +3408,66 @@ mod test {
     }
 
     #[test]
+    fn iter_rows_as_slices() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows_as_slices().unwrap();
+        assert_eq!(row_iter.next(), Some(&[1, 2, 3][..]));
+        assert_eq!(row_iter.next(), Some(&[4, 5, 6][..]));
+        assert_eq!(row_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rows_as_slices_rev() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows_as_slices().unwrap().rev();
+        assert_eq!(row_iter.next(), Some(&[4, 5, 6][..]));
+        assert_eq!(row_iter.next(), Some(&[1, 2, 3][..]));
+        assert_eq!(row_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rows_as_slices_exact_size() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows_as_slices().unwrap();
+        assert_eq!(row_iter.len(), 2);
+        assert!(row_iter.next().is_some());
+        assert_eq!(row_iter.len(), 1);
+        assert!(row_iter.next().is_some());
+        assert_eq!(row_iter.len(), 0);
+        assert!(row_iter.next().is_none());
+    }
+
+    #[test]
+    fn iter_rows_as_slices_mut() {
+        let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows_as_slices_mut().unwrap();
+        assert_eq!(row_iter.next(), Some(&mut [1, 2, 3][..]));
+        assert_eq!(row_iter.next(), Some(&mut [4, 5, 6][..]));
+        assert_eq!(row_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rows_as_slices_mut_rev() {
+        let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows_as_slices_mut().unwrap().rev();
+        assert_eq!(row_iter.next(), Some(&mut [4, 5, 6][..]));
+        assert_eq!(row_iter.next(), Some(&mut [1, 2, 3][..]));
+        assert_eq!(row_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_rows_as_slices_mut_exact_size() {
+        let mut grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mut row_iter = grid.iter_rows_as_slices_mut().unwrap();
+        assert_eq!(row_iter.len(), 2);
+        assert!(row_iter.next().is_some());
+        assert_eq!(row_iter.len(), 1);
+        assert!(row_iter.next().is_some());
+        assert_eq!(row_iter.len(), 0);
+        assert!(row_iter.next().is_none());
+    }
+
+    #[test]
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_cols() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
@@ -3390,6 +3504,74 @@ mod test {
     fn iter_cols_exact_size() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         let mut col_iter = grid.iter_cols();
+        assert_eq!(col_iter.len(), 3);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 2);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 1);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 0);
+        assert!(col_iter.next().is_none());
+    }
+
+    #[test]
+    fn iter_cols_as_slices() {
+        let grid: Grid<u8> = grid_cm![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols_as_slices().unwrap();
+        assert_eq!(col_iter.next(), Some(&[1, 4][..]));
+        assert_eq!(col_iter.next(), Some(&[2, 5][..]));
+        assert_eq!(col_iter.next(), Some(&[3, 6][..]));
+        assert_eq!(col_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_cols_as_slices_rev() {
+        let grid: Grid<u8> = grid_cm![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols_as_slices().unwrap().rev();
+        assert_eq!(col_iter.next(), Some(&[3, 6][..]));
+        assert_eq!(col_iter.next(), Some(&[2, 5][..]));
+        assert_eq!(col_iter.next(), Some(&[1, 4][..]));
+        assert_eq!(col_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_cols_as_slices_exact_size() {
+        let grid: Grid<u8> = grid_cm![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols_as_slices().unwrap();
+        assert_eq!(col_iter.len(), 3);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 2);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 1);
+        assert!(col_iter.next().is_some());
+        assert_eq!(col_iter.len(), 0);
+        assert!(col_iter.next().is_none());
+    }
+
+    #[test]
+    fn iter_cols_as_slices_mut() {
+        let mut grid: Grid<u8> = grid_cm![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols_as_slices_mut().unwrap();
+        assert_eq!(col_iter.next(), Some(&mut [1, 4][..]));
+        assert_eq!(col_iter.next(), Some(&mut [2, 5][..]));
+        assert_eq!(col_iter.next(), Some(&mut [3, 6][..]));
+        assert_eq!(col_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_cols_as_slices_mut_rev() {
+        let mut grid: Grid<u8> = grid_cm![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols_as_slices_mut().unwrap().rev();
+        assert_eq!(col_iter.next(), Some(&mut [3, 6][..]));
+        assert_eq!(col_iter.next(), Some(&mut [2, 5][..]));
+        assert_eq!(col_iter.next(), Some(&mut [1, 4][..]));
+        assert_eq!(col_iter.next(), None);
+    }
+
+    #[test]
+    fn iter_cols_as_slices_mut_exact_size() {
+        let mut grid: Grid<u8> = grid_cm![[1,2,3][4,5,6]];
+        let mut col_iter = grid.iter_cols_as_slices_mut().unwrap();
         assert_eq!(col_iter.len(), 3);
         assert!(col_iter.next().is_some());
         assert_eq!(col_iter.len(), 2);
