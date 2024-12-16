@@ -1555,11 +1555,13 @@ impl<T: hash::Hash> hash::Hash for Grid<T> {
     }
 }
 
-impl<T> Index<(usize, usize)> for Grid<T> {
+impl<T, U: TryInto<usize>, V: TryInto<usize>> Index<(U, V)> for Grid<T> {
     type Output = T;
 
     #[inline]
-    fn index(&self, (row, col): (usize, usize)) -> &T {
+    fn index(&self, (row, col): (U, V)) -> &T {
+        let row = row.try_into().ok().expect("row index less than zero");
+        let col = col.try_into().ok().expect("col index less than zero");
         assert!(
             !(row >= self.rows || col >= self.cols),
             "grid index out of bounds: ({row},{col}) out of ({},{})",
@@ -1571,9 +1573,11 @@ impl<T> Index<(usize, usize)> for Grid<T> {
     }
 }
 
-impl<T> IndexMut<(usize, usize)> for Grid<T> {
+impl<T, U: TryInto<usize>, V: TryInto<usize>> IndexMut<(U, V)> for Grid<T> {
     #[inline]
-    fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut T {
+    fn index_mut(&mut self, (row, col): (U, V)) -> &mut T {
+        let row = row.try_into().ok().expect("row index less than zero");
+        let col = col.try_into().ok().expect("col index less than zero");
         assert!(
             !(row >= self.rows || col >= self.cols),
             "grid index out of bounds: ({row},{col}) out of ({},{})",
@@ -3169,8 +3173,17 @@ mod test {
         let grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
         assert_eq!(grid[(0, 0)], 1);
         assert_eq!(grid[(0, 1)], 2);
-        assert_eq!(grid[(1, 0)], 3);
+        assert_eq!(grid[(1u32, 0u16)], 3);
         assert_eq!(grid[(1, 1)], 4);
+    }
+
+    #[test]
+    fn idx_signed_tup() {
+        let grid: Grid<u8> = Grid::from_vec(vec![1, 2, 3, 4], 2);
+        assert_eq!(grid[(0i64, 0i64)], 1);
+        assert_eq!(grid[(0i64, 1i64)], 2);
+        assert_eq!(grid[(1i32, 0u16)], 3);
+        assert_eq!(grid[(1usize, 1i16)], 4);
     }
 
     #[test]
@@ -3190,9 +3203,17 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn idx_tup_panic_3() {
+        let grid = Grid::init(1, 2, 3);
+        let _ = grid[(1, -1)];
+    }
+
+    #[test]
     fn idx_tup_set() {
         let mut grid = Grid::init(1, 2, 3);
-        grid[(0, 0)] = 4;
+        grid[(0u32, 0i16)] = 4;
         assert_eq!(grid[(0, 0)], 4);
     }
 
