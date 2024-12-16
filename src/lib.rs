@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::pedantic)]
+#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
 /*!
 # Two Dimensional Grid
 Continuous growable 2D data structure.
@@ -197,7 +197,7 @@ pub enum Order {
 }
 
 impl Order {
-    fn counterpart(self) -> Self {
+    const fn counterpart(self) -> Self {
         match self {
             Self::RowMajor => Self::ColumnMajor,
             Self::ColumnMajor => Self::RowMajor,
@@ -488,14 +488,14 @@ impl<T> Grid<T> {
             cols
         );
         if rows == 0 || cols == 0 {
-            Grid {
+            Self {
                 data: vec,
                 rows: 0,
                 cols: 0,
                 order,
             }
         } else {
-            Grid {
+            Self {
                 data: vec,
                 rows,
                 cols,
@@ -507,7 +507,7 @@ impl<T> Grid<T> {
     /// Returns the index of the coordinates in the internal vector.
     #[inline]
     #[must_use]
-    fn get_index(&self, row: usize, col: usize) -> usize {
+    const fn get_index(&self, row: usize, col: usize) -> usize {
         match self.order {
             Order::RowMajor => row * self.cols + col,
             Order::ColumnMajor => col * self.rows + row,
@@ -577,25 +577,25 @@ impl<T> Grid<T> {
     /// Returns the size of the grid as a two element tuple.
     /// First element are the number of rows and the second the columns.
     #[must_use]
-    pub fn size(&self) -> (usize, usize) {
+    pub const fn size(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
 
     /// Returns the number of rows of the grid.
     #[must_use]
-    pub fn rows(&self) -> usize {
+    pub const fn rows(&self) -> usize {
         self.rows
     }
 
     /// Returns the number of columns of the grid.
     #[must_use]
-    pub fn cols(&self) -> usize {
+    pub const fn cols(&self) -> usize {
         self.cols
     }
 
     /// Returns the internal memory layout of the grid.
     #[must_use]
-    pub fn order(&self) -> Order {
+    pub const fn order(&self) -> Order {
         self.order
     }
 
@@ -1259,7 +1259,7 @@ impl<T> Grid<T> {
     /// assert_eq!(flat, &vec![1,2,3,4,5,6]);
     /// ```
     #[must_use]
-    pub fn flatten(&self) -> &Vec<T> {
+    pub const fn flatten(&self) -> &Vec<T> {
         &self.data
     }
 
@@ -1469,7 +1469,7 @@ impl<T> Grid<T> {
     /// assert_eq!(sum_by_row, vec![1+2+3, 4+5+6])
     /// ```
     #[must_use]
-    pub fn iter_rows(&self) -> GridRowIter<'_, T> {
+    pub const fn iter_rows(&self) -> GridRowIter<'_, T> {
         GridRowIter {
             grid: self,
             row_start_index: 0,
@@ -1492,7 +1492,7 @@ impl<T> Grid<T> {
     /// assert_eq!(sum_by_col, vec![1+4, 2+5, 3+6])
     /// ```
     #[must_use]
-    pub fn iter_cols(&self) -> GridColIter<'_, T> {
+    pub const fn iter_cols(&self) -> GridColIter<'_, T> {
         GridColIter {
             grid: self,
             col_start_index: 0,
@@ -1540,7 +1540,7 @@ impl<T> Default for Grid<T> {
 
 impl<T: Clone> Clone for Grid<T> {
     fn clone(&self) -> Self {
-        Grid {
+        Self {
             rows: self.rows,
             cols: self.cols,
             data: self.data.clone(),
