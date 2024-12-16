@@ -1454,6 +1454,60 @@ impl<T> Grid<T> {
         self.data.fill_with(f);
     }
 
+    /// Returns a new grid with the same dimensions, but with each element transformed by the closure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid = grid![[1,2][3,4]];
+    /// let new_grid = grid.map(|x| x * 2);
+    /// assert_eq!(new_grid, grid![[2,4][6,8]]);
+    ///
+    /// let grid = grid![[1,2][3,4]];
+    /// let new_grid = grid.map(|x| x > 2);
+    /// assert_eq!(new_grid, grid![[false,false][true,true]]);
+    /// ```
+    pub fn map<U, F>(self, f: F) -> Grid<U>
+    where
+        F: FnMut(T) -> U,
+    {
+        Grid {
+            data: self.data.into_iter().map(f).collect(),
+            cols: self.cols,
+            rows: self.rows,
+            order: self.order,
+        }
+    }
+
+    /// Returns a new grid with the same dimensions, but with each element
+    /// transformed by the closure. Does not consume the grid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid = grid![[1,2][3,4]];
+    /// let new_grid = grid.map(|x| x * 2);
+    /// assert_eq!(new_grid, grid![[2,4][6,8]]);
+    ///
+    /// let grid = grid![[1,2][3,4]];
+    /// let new_grid = grid.map(|x| x > 2);
+    /// assert_eq!(new_grid, grid![[false,false][true,true]]);
+    /// ```
+    #[must_use]
+    pub fn map_ref<U, F>(&self, f: F) -> Grid<U>
+    where
+        F: Fn(&T) -> U,
+    {
+        Grid {
+            data: self.data.iter().map(f).collect(),
+            cols: self.cols,
+            rows: self.rows,
+            order: self.order,
+        }
+    }
+
     /// Iterate over the rows of the grid. Each time an iterator over a single
     /// row is returned.
     ///
