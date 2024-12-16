@@ -418,6 +418,7 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if `rows * cols > usize::MAX` or if `rows * cols * size_of::<T>() > isize::MAX`
+    #[must_use]
     pub fn with_capacity(rows: usize, cols: usize) -> Self {
         Self::with_capacity_and_order(rows, cols, Order::default())
     }
@@ -427,6 +428,7 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if `rows * cols > usize::MAX` or if `rows * cols * size_of::<T>() > isize::MAX`
+    #[must_use]
     pub fn with_capacity_and_order(rows: usize, cols: usize, order: Order) -> Self {
         Self {
             data: Vec::with_capacity(rows.checked_mul(cols).unwrap()),
@@ -634,6 +636,7 @@ impl<T> Grid<T> {
     /// assert_eq!(iter.next(), Some(&4));
     /// assert_eq!(iter.next(), None);
     /// ```
+    #[allow(clippy::iter_without_into_iter)]
     pub fn iter(&self) -> Iter<T> {
         self.data.iter()
     }
@@ -650,6 +653,7 @@ impl<T> Grid<T> {
     /// assert_eq!(next, Some(&mut 1));
     /// *next.unwrap() = 10;
     /// ```
+    #[allow(clippy::iter_without_into_iter)]
     pub fn iter_mut(&mut self) -> IterMut<T> {
         self.data.iter_mut()
     }
@@ -1731,9 +1735,9 @@ impl<'a, T> Iterator for GridRowIter<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for GridRowIter<'a, T> {}
+impl<T> ExactSizeIterator for GridRowIter<'_, T> {}
 
-impl<'a, T> DoubleEndedIterator for GridRowIter<'a, T> {
+impl<T> DoubleEndedIterator for GridRowIter<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.row_start_index >= self.row_end_index {
             return None;
@@ -1764,9 +1768,9 @@ impl<'a, T> Iterator for GridColIter<'a, T> {
     }
 }
 
-impl<'a, T> ExactSizeIterator for GridColIter<'a, T> {}
+impl<T> ExactSizeIterator for GridColIter<'_, T> {}
 
-impl<'a, T> DoubleEndedIterator for GridColIter<'a, T> {
+impl<T> DoubleEndedIterator for GridColIter<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.col_start_index >= self.col_end_index {
             return None;
