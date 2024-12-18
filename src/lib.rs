@@ -3282,6 +3282,20 @@ mod test {
     }
 
     #[test]
+    fn map() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mapped = grid.map(|x| x * 2);
+        test_grid(&mapped, 2, 3, Order::RowMajor, &[2, 4, 6, 8, 10, 12]);
+    }
+
+    #[test]
+    fn map_ref() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mapped = grid.map_ref(|x| *x * 2);
+        test_grid(&mapped, 2, 3, Order::RowMajor, &[2, 4, 6, 8, 10, 12]);
+    }
+
+    #[test]
     #[allow(clippy::redundant_closure_for_method_calls)]
     fn iter_rows() {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
