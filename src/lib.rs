@@ -636,7 +636,6 @@ impl<T> Grid<T> {
     /// assert_eq!(iter.next(), Some(&4));
     /// assert_eq!(iter.next(), None);
     /// ```
-    #[allow(clippy::iter_without_into_iter)]
     pub fn iter(&self) -> Iter<T> {
         self.data.iter()
     }
@@ -653,7 +652,6 @@ impl<T> Grid<T> {
     /// assert_eq!(next, Some(&mut 1));
     /// *next.unwrap() = 10;
     /// ```
-    #[allow(clippy::iter_without_into_iter)]
     pub fn iter_mut(&mut self) -> IterMut<T> {
         self.data.iter_mut()
     }
@@ -1640,6 +1638,24 @@ impl<T> IndexMut<(usize, usize)> for Grid<T> {
         );
         let index = self.get_index(row, col);
         &mut self.data[index]
+    }
+}
+
+impl<'a, T> IntoIterator for &'a Grid<T> {
+    type IntoIter = core::slice::Iter<'a, T>;
+    type Item = &'a T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a, T> IntoIterator for &'a mut Grid<T> {
+    type IntoIter = core::slice::IterMut<'a, T>;
+    type Item = &'a mut T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
     }
 }
 
@@ -2711,6 +2727,23 @@ mod test {
     }
 
     #[test]
+    fn into_iter() {
+        let grid: Grid<u8> = grid![[1,1][1,1]];
+        for val in &grid {
+            assert_eq!(val, &1);
+        }
+    }
+
+    #[test]
+    fn into_iter_mut() {
+        let mut grid: Grid<u8> = grid![[1,1][1,1]];
+        for val in &mut grid {
+            *val = 2;
+        }
+        assert_eq!(grid, grid![[2, 2][2, 2]]);
+    }
+
+    #[test]
     fn indexed_iter() {
         let grid: Grid<u8> = grid![[1,2][3,4]];
         let mut iter = grid.indexed_iter();
@@ -2926,7 +2959,7 @@ mod test {
 
         impl Person {
             fn new(name: &str, precise_age: f32) -> Self {
-                Person {
+                Self {
                     _name: name.into(),
                     _precise_age: precise_age,
                 }
