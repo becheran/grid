@@ -14,8 +14,8 @@ fn init_grid() -> Grid<u8> {
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
-    let mut rng = rand::thread_rng();
-    let mut rand = || rng.gen_range(0..SIZE);
+    let mut rng = rand::rng();
+    let mut rand = || rng.random_range(0..SIZE);
 
     // Init macro
     c.bench_function("vecvec_init_macro", |b| {
