@@ -16,11 +16,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@main
       - name: Markup Link Checker (mlc)
-        uses: becheran/mlc@v0.15.4
+        uses: becheran/mlc@v0.19.1
+  formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+      - uses: actions-rust-lang/rustfmt@v1
+      - run: cargo clippy --all-targets --all-features
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run test
         run: cargo test --verbose
       - name: Run test release
@@ -28,14 +37,14 @@ jobs:
   test-no-default:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run test
         run: cargo test --verbose --no-default-features
       - name: Run test release
         run: cargo test --verbose --release --no-default-features
   release:
     runs-on: ubuntu-latest
-    needs: [test, test-no-default]
+    needs: [test, test-no-default, formatting]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
