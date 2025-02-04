@@ -295,7 +295,7 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for Grid<T> {
             }
         }
 
-        const FIELDS: &'static [&'static str] = &["cols", "data", "order"];
+        const FIELDS: &[&str] = &["cols", "data", "order"];
         deserializer.deserialize_struct("Grid", FIELDS, GridVisitor { _p: PhantomData })
     }
 }
@@ -3623,14 +3623,14 @@ mod test {
         #[test]
         fn deserialize() {
             let s = "{ \"cols\": 2, \"data\": [1, 2, 3, 4] }";
-            let grid: Grid<u8> = serde_json::from_str(&s).unwrap();
+            let grid: Grid<u8> = serde_json::from_str(s).unwrap();
             assert_eq!(grid, grid![[1, 2][3, 4]]);
         }
 
         #[test]
         fn deserialize_with_order() {
             let s = "{ \"cols\": 2, \"data\": [1, 3, 2, 4], \"order\": \"ColumnMajor\" }";
-            let grid: Grid<u8> = serde_json::from_str(&s).unwrap();
+            let grid: Grid<u8> = serde_json::from_str(s).unwrap();
             test_grid(&grid, 2, 2, Order::ColumnMajor, &[1, 3, 2, 4]);
         }
     }
