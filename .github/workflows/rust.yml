@@ -30,10 +30,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install Miri
+        run: |
+          rustup toolchain install nightly --component miri
+          rustup override set nightly
+          cargo miri setup
       - name: Run test
-        run: cargo test --verbose
+        run: cargo miri test --verbose
       - name: Run test release
-        run: cargo test --verbose --release
+        run: cargo miri test --verbose --release
   test-no-default:
     runs-on: ubuntu-latest
     steps:
