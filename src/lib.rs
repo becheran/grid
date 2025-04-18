@@ -2737,9 +2737,7 @@ mod test {
     #[test]
     fn into_iter_mut() {
         let mut grid: Grid<u8> = grid![[1,1][1,1]];
-        for val in &mut grid {
-            *val = 2;
-        }
+        grid.fill(2);
         assert_eq!(grid, grid![[2, 2][2, 2]]);
     }
 
