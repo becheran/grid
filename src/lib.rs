@@ -1579,6 +1579,50 @@ impl<T> Grid<T> {
     }
 }
 
+impl<T: Default> Grid<T> {
+    /// Expands the grid with the given amount of rows filling the new rows with T::default().
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let mut grid: Grid<u8> = grid![[1, 2, 3][3, 4, 5]];
+    /// grid.expand_rows(2);
+    /// assert_eq!(grid.rows(), 4);
+    /// assert_eq!(grid[(2, 0)], 0);
+    /// assert_eq!(grid[(2, 1)], 0);
+    /// assert_eq!(grid[(2, 2)], 0);
+    /// assert_eq!(grid[(3, 0)], 0);
+    /// assert_eq!(grid[(3, 1)], 0);
+    /// assert_eq!(grid[(3, 2)], 0);
+    /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a column-major memory layout.
+    pub fn expand_rows(&mut self, rows: usize) {
+        if rows > 0 && self.cols > 0 {
+            let mut new_rows = Vec::with_capacity(rows * self.cols);
+            for _ in 0..new_rows.capacity() {
+                new_rows.push(T::default());
+            }
+
+            self.data.extend(new_rows);
+
+            if self.order == Order::ColumnMajor {
+                for row_added in 0..rows {
+                    for i in (1..self.cols).rev() {
+                        let total_rows = self.rows + row_added;
+                        let col_idx = i * total_rows;
+                        self.data[col_idx..col_idx + total_rows + i].rotate_right(i);
+                    }
+                }
+            }
+            self.rows += rows;
+        }
+    }
+}
+
 impl<T> Default for Grid<T> {
     fn default() -> Self {
         Self {
@@ -2529,6 +2573,54 @@ mod test {
             Grid::from_vec_with_order(vec!['a', 'a', 'a', 'a', 'a', 'a'], 3, Order::ColumnMajor);
         grid.push_row(vec!['b']);
         grid.push_row(vec!['b', 'b', 'b', 'b']);
+    }
+
+    #[test]
+    fn expand_rows() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 1, 1, 2, 2, 2], 3, Order::RowMajor);
+        grid.expand_rows(2);
+
+        assert_eq!(grid.size(), (4, 3));
+        assert_eq!(grid.order, Order::RowMajor);
+        assert_eq!(grid.rows(), 4);
+        assert_eq!(grid.cols(), 3);
+        assert_eq!(grid.into_vec(), vec![1, 1, 1, 2, 2, 2, 0, 0, 0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn expand_rows_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2, 1, 2, 1, 2], 3, Order::ColumnMajor);
+        grid.expand_rows(2);
+
+        assert_eq!(grid.size(), (4, 3));
+        assert_eq!(grid.order, Order::ColumnMajor);
+        assert_eq!(grid.rows(), 4);
+        assert_eq!(grid.cols(), 3);
+        assert_eq!(grid.into_vec(), vec![1, 2, 0, 0, 1, 2, 0, 0, 1, 2, 0, 0]);
+    }
+
+    #[test]
+    fn expand_rows_zero() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 1, 1], 3, Order::RowMajor);
+        grid.expand_rows(0);
+
+        assert_eq!(grid.size(), (1, 3));
+        assert_eq!(grid.order, Order::RowMajor);
+        assert_eq!(grid.rows(), 1);
+        assert_eq!(grid.cols(), 3);
+        assert_eq!(grid.into_vec(), vec![1, 1, 1]);
+    }
+
+    #[test]
+    fn expand_rows_empty_grid() {
+        let mut grid: Grid<u8> = Grid::init(0, 0, 0);
+        grid.expand_rows(2);
+
+        assert_eq!(grid.size(), (0, 0));
+        assert_eq!(grid.order, Order::RowMajor);
+        assert_eq!(grid.rows(), 0);
+        assert_eq!(grid.cols(), 0);
+        assert_eq!(grid.into_vec(), vec![]);
     }
 
     #[test]
