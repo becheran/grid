@@ -1581,7 +1581,8 @@ impl<T> Grid<T> {
 
 impl<T: Default> Grid<T> {
     /// Expands the grid with the given amount of rows filling the new rows with T::default().
-    ///
+    /// If the grid has no rows or no columns, nothing will happen.
+    /// 
     /// # Examples
     ///
     /// ```
