@@ -1582,7 +1582,7 @@ impl<T> Grid<T> {
 impl<T: Default> Grid<T> {
     /// Expands the grid with the given amount of rows filling the new rows with T::default().
     /// If the grid has no rows or no columns, nothing will happen.
-    /// 
+    ///
     /// # Examples
     ///
     /// ```
@@ -1603,12 +1603,8 @@ impl<T: Default> Grid<T> {
     /// This method will be significantly slower if the grid uses a column-major memory layout.
     pub fn expand_rows(&mut self, rows: usize) {
         if rows > 0 && self.cols > 0 {
-            let mut new_rows = Vec::with_capacity(rows * self.cols);
-            for _ in 0..new_rows.capacity() {
-                new_rows.push(T::default());
-            }
-
-            self.data.extend(new_rows);
+            self.data
+                .resize_with(self.data.len() + rows * self.cols, T::default);
 
             if self.order == Order::ColumnMajor {
                 for row_added in 0..rows {
@@ -1644,12 +1640,8 @@ impl<T: Default> Grid<T> {
     /// This method will be significantly slower if the grid uses a row-major memory layout.
     pub fn expand_cols(&mut self, cols: usize) {
         if cols > 0 && self.rows > 0 {
-            let mut new_cols = Vec::with_capacity(cols * self.rows);
-            for _ in 0..new_cols.capacity() {
-                new_cols.push(T::default());
-            }
-
-            self.data.extend(new_cols);
+            self.data
+                .resize_with(self.data.len() + cols * self.rows, T::default);
 
             if self.order == Order::RowMajor {
                 for col_added in 0..cols {
