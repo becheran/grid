@@ -1580,7 +1580,7 @@ impl<T> Grid<T> {
 }
 
 impl<T: Default> Grid<T> {
-    /// Expands the grid with the given amount of rows filling the new rows with T::default().
+    /// Expands the grid with the given amount of rows filling the new rows with `T::default()`.
     /// If the grid has no rows or no columns, nothing will happen.
     ///
     /// # Examples
@@ -1619,7 +1619,7 @@ impl<T: Default> Grid<T> {
         }
     }
 
-    /// Expands the grid with the given amount of cols filling the new cols with T::default().
+    /// Expands the grid with the given amount of cols filling the new cols with `T::default()`.
     /// If the grid has no rows or no columns, nothing will happen.
     ///
     /// # Examples
@@ -2654,7 +2654,7 @@ mod test {
         assert_eq!(grid.order, Order::RowMajor);
         assert_eq!(grid.rows(), 0);
         assert_eq!(grid.cols(), 0);
-        assert_eq!(grid.into_vec(), vec![]);
+        assert_eq!(grid.into_vec(), Vec::<u8>::new());
     }
 
     #[test]
@@ -2702,7 +2702,7 @@ mod test {
         assert_eq!(grid.order, Order::RowMajor);
         assert_eq!(grid.rows(), 0);
         assert_eq!(grid.cols(), 0);
-        assert_eq!(grid.into_vec(), vec![]);
+        assert_eq!(grid.into_vec(), Vec::<u8>::new());
     }
 
     #[test]
