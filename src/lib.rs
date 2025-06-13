@@ -881,6 +881,44 @@ impl<T> Grid<T> {
         })
     }
 
+    /// Consume grid the grid with row and column indexes.
+    ///
+    /// The iteration order is dependent on the internal memory layout,
+    /// but the indexes will be accurate either way.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// use std::rc::Rc;
+    ///
+    /// let grid: Grid<Rc<u8>> = grid![[Rc::new(1),Rc::new(2)][Rc::new(3),Rc::new(4)]];
+    /// let mut iter = grid.indexed_into_iter();
+    /// assert_eq!(iter.next(), Some(((0, 0), Rc::new(1))));
+    /// ```
+    ///
+    /// Or simply unpack in a `for` loop:
+    ///
+    /// ```
+    /// use grid::*;
+    /// use std::rc::Rc;
+    ///
+    /// let grid: Grid<Rc<i32>> = grid![[Rc::new(1),Rc::new(2)][Rc::new(3),Rc::new(4)]];
+    /// for ((row, col), i) in grid.indexed_into_iter() {
+    ///     println!("value at row {row} and column {col} is: {i}");
+    /// }
+    /// ```
+    pub fn indexed_into_iter(self) -> impl Iterator<Item = ((usize, usize), T)> {
+        let Grid{data, cols, rows, order} = self;
+        data.into_iter().enumerate().map(move |(idx, i)| {
+            let position = match order {
+                Order::RowMajor => (idx / cols, idx % cols),
+                Order::ColumnMajor => (idx % rows, idx / rows),
+            };
+            (position, i)
+        })
+    }
+
     /// Add a new row to the grid.
     ///
     /// # Examples
@@ -1716,6 +1754,15 @@ impl<T> IndexMut<(usize, usize)> for Grid<T> {
         );
         let index = self.get_index(row, col);
         &mut self.data[index]
+    }
+}
+
+impl<'a, T> IntoIterator for Grid<T> {
+    type IntoIter = std::vec::IntoIter<T>;
+    type Item = T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.data.into_iter()
     }
 }
 
@@ -2903,6 +2950,14 @@ mod test {
     #[test]
     fn into_iter() {
         let grid: Grid<u8> = grid![[1,1][1,1]];
+        for val in grid {
+            assert_eq!(val, 1);
+        }
+    }
+
+    #[test]
+    fn into_iter_ref() {
+        let grid: Grid<u8> = grid![[1,1][1,1]];
         for val in &grid {
             assert_eq!(val, &1);
         }
@@ -2930,6 +2985,17 @@ mod test {
     fn indexed_iter_empty() {
         let grid: Grid<u8> = Grid::new(0, 0);
         let mut iter = grid.indexed_iter();
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn indexed_into_iter() {
+        let grid: Grid<u8> = grid![[1,2][3,4]];
+        let mut iter = grid.indexed_into_iter();
+        assert_eq!(iter.next(), Some(((0, 0), 1)));
+        assert_eq!(iter.next(), Some(((0, 1), 2)));
+        assert_eq!(iter.next(), Some(((1, 0), 3)));
+        assert_eq!(iter.next(), Some(((1, 1), 4)));
         assert_eq!(iter.next(), None);
     }
 
