@@ -909,7 +909,12 @@ impl<T> Grid<T> {
     /// }
     /// ```
     pub fn indexed_into_iter(self) -> impl Iterator<Item = ((usize, usize), T)> {
-        let Grid{data, cols, rows, order} = self;
+        let Grid {
+            data,
+            cols,
+            rows,
+            order,
+        } = self;
         data.into_iter().enumerate().map(move |(idx, i)| {
             let position = match order {
                 Order::RowMajor => (idx / cols, idx % cols),
@@ -1758,7 +1763,7 @@ impl<T> IndexMut<(usize, usize)> for Grid<T> {
 }
 
 impl<'a, T> IntoIterator for Grid<T> {
-    type IntoIter = std::vec::IntoIter<T>;
+    type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
     type Item = T;
 
     fn into_iter(self) -> Self::IntoIter {
