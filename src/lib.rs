@@ -909,7 +909,7 @@ impl<T> Grid<T> {
     /// }
     /// ```
     pub fn indexed_into_iter(self) -> impl Iterator<Item = ((usize, usize), T)> {
-        let Grid {
+        let Self {
             data,
             cols,
             rows,
@@ -1762,7 +1762,7 @@ impl<T> IndexMut<(usize, usize)> for Grid<T> {
     }
 }
 
-impl<'a, T> IntoIterator for Grid<T> {
+impl<T> IntoIterator for Grid<T> {
     type IntoIter = <Vec<T> as IntoIterator>::IntoIter;
     type Item = T;
 
