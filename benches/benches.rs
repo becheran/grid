@@ -201,6 +201,60 @@ fn criterion_benchmark(c: &mut Criterion) {
             criterion::BatchSize::SmallInput,
         )
     });
+
+    // Insert
+    c.bench_function("grid_insert_row", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.insert_row(rand(), vec![42; g.cols()]),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_insert_col", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.insert_col(rand(), vec![42; g.rows()]),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    // Expand
+    c.bench_function("grid_expand_rows", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.expand_rows(1),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_expand_cols", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.expand_cols(1),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+
+    // Prepend
+    c.bench_function("grid_prepend_rows", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.prepend_rows(1),
+            criterion::BatchSize::SmallInput,
+        )
+    });
+    c.bench_function("grid_prepend_cols", |b| {
+        let grid = init_grid();
+        b.iter_batched(
+            || grid.clone(),
+            |mut g| g.prepend_cols(1),
+            criterion::BatchSize::SmallInput,
+        )
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
