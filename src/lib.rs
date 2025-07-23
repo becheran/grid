@@ -1725,19 +1725,14 @@ impl<T: Default> Grid<T> {
             self.data
                 .resize_with(self.data.len() + rows * self.cols, T::default);
 
-            match self.order  {
+            match self.order {
                 Order::RowMajor => {
-                    //for i in (0..self.cols).rev() {
-                    //    let s = i * self.rows;
-                    //    let e = (i + cols + 1) * self.rows;
-                    //    self.data[s..e].rotate_left(cols);
-                    //}
                     for i in (0..self.rows).rev() {
                         let s = i * self.cols;
                         let e = (i + rows + 1) * self.cols;
                         self.data[s..e].rotate_left(self.cols);
                     }
-                },
+                }
                 Order::ColumnMajor => {
                     for row_added in 0..rows {
                         for i in (0..self.cols).rev() {
@@ -1776,7 +1771,7 @@ impl<T: Default> Grid<T> {
             self.data
                 .resize_with(self.data.len() + cols * self.rows, T::default);
 
-            match self.order  {
+            match self.order {
                 Order::RowMajor => {
                     for col_added in 0..cols {
                         for i in (0..self.rows).rev() {
@@ -1785,7 +1780,7 @@ impl<T: Default> Grid<T> {
                             self.data[row_idx..=row_idx + total_cols + i].rotate_right(i + 1);
                         }
                     }
-                },
+                }
                 Order::ColumnMajor => {
                     for i in (0..self.cols).rev() {
                         let s = i * self.rows;
