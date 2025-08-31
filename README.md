@@ -1,6 +1,6 @@
 # Grid
 
-[![docs](https://docs.rs/grid/badge.svg)](https://docs.rs/grid)
+[![docs](https://img.shields.io/docsrs/grid/latest)](https://docs.rs/grid/latest/grid/)
 [![crates.io](https://badgen.net/crates/d/grid)](https://crates.io/crates/grid)
 [![build status](https://github.com/becheran/grid/actions/workflows/rust.yml/badge.svg)](https://github.com/becheran/grid/actions)
 [![license](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -15,5 +15,5 @@ To use *grid* with *no_std* import the library such as:
 grid = { version = "*", default-features = false }
 ```
 
-- [documentation](https://docs.rs/grid/)
+- [documentation](https://docs.rs/grid/latest/grid/)
 - [library on crates.io](https://crates.io/crates/grid)
