@@ -636,7 +636,7 @@ impl<T> Grid<T> {
     /// assert_eq!(iter.next(), Some(&4));
     /// assert_eq!(iter.next(), None);
     /// ```
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         self.data.iter()
     }
 
@@ -652,7 +652,7 @@ impl<T> Grid<T> {
     /// assert_eq!(next, Some(&mut 1));
     /// *next.unwrap() = 10;
     /// ```
-    pub fn iter_mut(&mut self) -> IterMut<T> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         self.data.iter_mut()
     }
 
@@ -677,7 +677,7 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the col index is out of bounds.
-    pub fn iter_col(&self, col: usize) -> StepBy<Iter<T>> {
+    pub fn iter_col(&self, col: usize) -> StepBy<Iter<'_, T>> {
         assert!(
             col < self.cols,
             "out of bounds. Column must be less than {:?}, but is {:?}",
@@ -715,7 +715,7 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the col index is out of bounds.
-    pub fn iter_col_mut(&mut self, col: usize) -> StepBy<IterMut<T>> {
+    pub fn iter_col_mut(&mut self, col: usize) -> StepBy<IterMut<'_, T>> {
         assert!(
             col < self.cols,
             "out of bounds. Column must be less than {:?}, but is {:?}",
@@ -752,7 +752,7 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the row index is out of bounds.
-    pub fn iter_row(&self, row: usize) -> StepBy<Iter<T>> {
+    pub fn iter_row(&self, row: usize) -> StepBy<Iter<'_, T>> {
         assert!(
             row < self.rows,
             "out of bounds. Row must be less than {:?}, but is {:?}",
@@ -788,7 +788,7 @@ impl<T> Grid<T> {
     /// # Panics
     ///
     /// Panics if the row index is out of bounds.
-    pub fn iter_row_mut(&mut self, row: usize) -> StepBy<IterMut<T>> {
+    pub fn iter_row_mut(&mut self, row: usize) -> StepBy<IterMut<'_, T>> {
         assert!(
             row < self.rows,
             "out of bounds. Row must be less than {:?}, but is {:?}",
