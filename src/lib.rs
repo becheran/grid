@@ -1185,6 +1185,106 @@ impl<T> Grid<T> {
         Some(col)
     }
 
+    /// Delete a row at the index without returning it, avoiding allocation.
+    ///
+    /// This method is more efficient than [`remove_row`](Grid::remove_row) when you don't need
+    /// the removed elements, as it avoids allocating a `Vec<T>` to hold them.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2][3,4][5,6]];
+    /// assert!(grid.delete_row(1));
+    /// assert_eq!(grid, grid![[1,2][5,6]]);
+    /// assert!(grid.delete_row(0));
+    /// assert_eq!(grid, grid![[5,6]]);
+    /// assert!(grid.delete_row(0));
+    /// assert!(grid.is_empty());
+    /// assert!(!grid.delete_row(0));
+    /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a column-major memory layout.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the row was successfully deleted, `false` if the index was out of bounds.
+    pub fn delete_row(&mut self, row_index: usize) -> bool {
+        if self.cols == 0 || self.rows == 0 || row_index >= self.rows {
+            return false;
+        }
+        match self.order {
+            Order::RowMajor => {
+                let start = row_index * self.cols;
+                let end = (row_index + 1) * self.cols;
+                self.data.drain(start..end);
+            }
+            Order::ColumnMajor => {
+                for i in 0..self.cols {
+                    let col_idx = row_index + i * (self.rows - 1);
+                    let end = cmp::min(col_idx + self.rows + i, self.data.len());
+                    self.data[col_idx..end].rotate_left(i + 1);
+                }
+                self.data.truncate(self.data.len() - self.cols);
+            }
+        }
+        self.rows -= 1;
+        if self.rows == 0 {
+            self.cols = 0;
+        }
+        true
+    }
+
+    /// Delete a column at the index without returning it, avoiding allocation.
+    ///
+    /// This method is more efficient than [`remove_col`](Grid::remove_col) when you don't need
+    /// the removed elements, as it avoids allocating a `Vec<T>` to hold them.
+    ///
+    /// # Examples
+    /// ```
+    /// use grid::*;
+    /// let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
+    /// assert!(grid.delete_col(3));
+    /// assert_eq!(grid, grid![[1,2,3][5,6,7][9,10,11][13,14,15]]);
+    /// assert!(grid.delete_col(0));
+    /// assert_eq!(grid, grid![[2,3][6,7][10,11][14,15]]);
+    /// ```
+    ///
+    /// # Performance
+    ///
+    /// This method will be significantly slower if the grid uses a row-major memory layout,
+    /// which is the default.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the column was successfully deleted, `false` if the index was out of bounds.
+    pub fn delete_col(&mut self, col_index: usize) -> bool {
+        if self.cols == 0 || self.rows == 0 || col_index >= self.cols {
+            return false;
+        }
+        match self.order {
+            Order::RowMajor => {
+                for i in 0..self.rows {
+                    let row_idx = col_index + i * (self.cols - 1);
+                    let end = cmp::min(row_idx + self.cols + i, self.data.len());
+                    self.data[row_idx..end].rotate_left(i + 1);
+                }
+                self.data.truncate(self.data.len() - self.rows);
+            }
+            Order::ColumnMajor => {
+                let start = col_index * self.rows;
+                let end = (col_index + 1) * self.rows;
+                self.data.drain(start..end);
+            }
+        }
+        self.cols -= 1;
+        if self.cols == 0 {
+            self.rows = 0;
+        }
+        true
+    }
+
     /// Insert a new row at the index and shifts all rows after down.
     ///
     /// # Examples
@@ -3944,6 +4044,102 @@ mod test {
         assert_eq!(grid.remove_col(5), None);
         test_grid(&grid, 2, 2, Order::ColumnMajor, &[1, 3, 2, 4]);
         assert_eq!(grid.remove_col(1), Some(vec![2, 4]));
+        test_grid(&grid, 2, 1, Order::ColumnMajor, &[1, 3]);
+    }
+
+    #[test]
+    fn delete_row() {
+        let mut grid = grid![[1,2][3,4][5,6]];
+        assert!(grid.delete_row(1));
+        test_grid(&grid, 2, 2, Order::RowMajor, &[1, 2, 5, 6]);
+        assert!(grid.delete_row(0));
+        test_grid(&grid, 1, 2, Order::RowMajor, &[5, 6]);
+        assert!(grid.delete_row(0));
+        test_grid(&grid, 0, 0, Order::RowMajor, &[]);
+        assert!(!grid.delete_row(0));
+        test_grid(&grid, 0, 0, Order::RowMajor, &[]);
+    }
+
+    #[test]
+    fn delete_row_out_of_bound() {
+        let mut grid = grid![[1, 2][3, 4]];
+        assert!(!grid.delete_row(5));
+        test_grid(&grid, 2, 2, Order::RowMajor, &[1, 2, 3, 4]);
+        assert!(grid.delete_row(1));
+        test_grid(&grid, 1, 2, Order::RowMajor, &[1, 2]);
+    }
+
+    #[test]
+    fn delete_row_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 3, 5, 2, 4, 6], 2, Order::ColumnMajor);
+        assert!(grid.delete_row(1));
+        test_grid(&grid, 2, 2, Order::ColumnMajor, &[1, 5, 2, 6]);
+        assert!(grid.delete_row(0));
+        test_grid(&grid, 1, 2, Order::ColumnMajor, &[5, 6]);
+        assert!(grid.delete_row(0));
+        test_grid(&grid, 0, 0, Order::ColumnMajor, &[]);
+        assert!(!grid.delete_row(0));
+        test_grid(&grid, 0, 0, Order::ColumnMajor, &[]);
+    }
+
+    #[test]
+    fn delete_row_out_of_bound_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 3, 2, 4], 2, Order::ColumnMajor);
+        assert!(!grid.delete_row(5));
+        test_grid(&grid, 2, 2, Order::ColumnMajor, &[1, 3, 2, 4]);
+        assert!(grid.delete_row(1));
+        test_grid(&grid, 1, 2, Order::ColumnMajor, &[1, 2]);
+    }
+
+    #[test]
+    fn delete_col() {
+        let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12][13,14,15,16]];
+        assert!(grid.delete_col(3));
+        let expected = [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15];
+        test_grid(&grid, 4, 3, Order::RowMajor, &expected);
+        assert!(grid.delete_col(0));
+        test_grid(&grid, 4, 2, Order::RowMajor, &[2, 3, 6, 7, 10, 11, 14, 15]);
+        assert!(grid.delete_col(1));
+        test_grid(&grid, 4, 1, Order::RowMajor, &[2, 6, 10, 14]);
+        assert!(grid.delete_col(0));
+        test_grid(&grid, 0, 0, Order::RowMajor, &[]);
+        assert!(!grid.delete_col(0));
+        test_grid(&grid, 0, 0, Order::RowMajor, &[]);
+    }
+
+    #[test]
+    fn delete_col_out_of_bound() {
+        let mut grid = grid![[1, 2][3, 4]];
+        assert!(!grid.delete_col(5));
+        test_grid(&grid, 2, 2, Order::RowMajor, &[1, 2, 3, 4]);
+        assert!(grid.delete_col(1));
+        test_grid(&grid, 2, 1, Order::RowMajor, &[1, 3]);
+    }
+
+    #[test]
+    fn delete_col_column_major() {
+        let internal = vec![1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15, 4, 8, 12, 16];
+        let mut grid = Grid::from_vec_with_order(internal, 4, Order::ColumnMajor);
+        assert!(grid.delete_col(3));
+        let expected = [1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15];
+        test_grid(&grid, 4, 3, Order::ColumnMajor, &expected);
+        assert!(grid.delete_col(0));
+        let expected = [2, 6, 10, 14, 3, 7, 11, 15];
+        test_grid(&grid, 4, 2, Order::ColumnMajor, &expected);
+        assert!(grid.delete_col(1));
+        test_grid(&grid, 4, 1, Order::ColumnMajor, &[2, 6, 10, 14]);
+        assert!(grid.delete_col(0));
+        test_grid(&grid, 0, 0, Order::ColumnMajor, &[]);
+        assert!(!grid.delete_col(0));
+        test_grid(&grid, 0, 0, Order::ColumnMajor, &[]);
+    }
+
+    #[test]
+    fn delete_col_out_of_bound_column_major() {
+        let mut grid = Grid::from_vec_with_order(vec![1, 3, 2, 4], 2, Order::ColumnMajor);
+        assert!(!grid.delete_col(5));
+        test_grid(&grid, 2, 2, Order::ColumnMajor, &[1, 3, 2, 4]);
+        assert!(grid.delete_col(1));
         test_grid(&grid, 2, 1, Order::ColumnMajor, &[1, 3]);
     }
 
