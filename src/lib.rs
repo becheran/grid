@@ -4144,6 +4144,52 @@ mod test {
     }
 
     #[test]
+    fn delete_row_multiple() {
+        // Test deleting multiple rows to ensure correctness
+        let mut grid = grid![[1,2,3][4,5,6][7,8,9][10,11,12]];
+        assert!(grid.delete_row(2));
+        test_grid(&grid, 3, 3, Order::RowMajor, &[1,2,3,4,5,6,10,11,12]);
+        assert!(grid.delete_row(1));
+        test_grid(&grid, 2, 3, Order::RowMajor, &[1,2,3,10,11,12]);
+        assert!(grid.delete_row(0));
+        test_grid(&grid, 1, 3, Order::RowMajor, &[10,11,12]);
+    }
+
+    #[test]
+    fn delete_col_multiple() {
+        // Test deleting multiple columns to ensure correctness
+        let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12]];
+        assert!(grid.delete_col(2));
+        test_grid(&grid, 3, 3, Order::RowMajor, &[1,2,4,5,6,8,9,10,12]);
+        assert!(grid.delete_col(1));
+        test_grid(&grid, 3, 2, Order::RowMajor, &[1,4,5,8,9,12]);
+        assert!(grid.delete_col(0));
+        test_grid(&grid, 3, 1, Order::RowMajor, &[4,8,12]);
+    }
+
+    #[test]
+    fn delete_row_vs_remove_row_equivalence() {
+        // Verify delete_row produces same result as remove_row
+        let mut grid1 = grid![[1,2][3,4][5,6]];
+        let mut grid2 = grid![[1,2][3,4][5,6]];
+        
+        grid1.delete_row(1);
+        let _ = grid2.remove_row(1);
+        assert_eq!(grid1, grid2);
+    }
+
+    #[test]
+    fn delete_col_vs_remove_col_equivalence() {
+        // Verify delete_col produces same result as remove_col
+        let mut grid1 = grid![[1,2,3][4,5,6][7,8,9]];
+        let mut grid2 = grid![[1,2,3][4,5,6][7,8,9]];
+        
+        grid1.delete_col(1);
+        let _ = grid2.remove_col(1);
+        assert_eq!(grid1, grid2);
+    }
+
+    #[test]
     fn flip_cols() {
         let mut grid = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::RowMajor);
         grid.flip_cols();
