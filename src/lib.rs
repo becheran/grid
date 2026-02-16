@@ -1649,6 +1649,66 @@ impl<T> Grid<T> {
         }
     }
 
+    /// Returns a new grid with the same dimensions, but with each element
+    /// transformed by the closure that receives both the index `(row, col)` and the value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<i32> = grid![[1,2][3,4]];
+    /// let new_grid = grid.indexed_map(|(row, col), v| v + row as i32 + col as i32);
+    /// assert_eq!(new_grid, grid![[1,3][4,6]]);
+    ///
+    /// let grid: Grid<i32> = grid![[1,2][3,4]];
+    /// let new_grid: Grid<Option<i32>> = grid.indexed_map(|(row, col), v| (row > col).then_some(v));
+    /// assert_eq!(new_grid, grid![[None,None][Some(3),None]]);
+    /// ```
+    #[must_use]
+    pub fn indexed_map<U, F>(self, mut f: F) -> Grid<U>
+    where
+        F: FnMut((usize, usize), T) -> U,
+    {
+        let cols = self.cols;
+        let rows = self.rows;
+        let order = self.order;
+        Grid {
+            data: self.indexed_into_iter().map(|(idx, val)| f(idx, val)).collect(),
+            cols,
+            rows,
+            order,
+        }
+    }
+
+    /// Returns a new grid with the same dimensions, but with each element
+    /// transformed by the closure that receives both the index `(row, col)` and a reference to the value.
+    /// Does not consume the grid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use grid::*;
+    /// let grid: Grid<i32> = grid![[1,2][3,4]];
+    /// let new_grid = grid.indexed_map_ref(|(row, col), v| v + row as i32 + col as i32);
+    /// assert_eq!(new_grid, grid![[1,3][4,6]]);
+    ///
+    /// let grid: Grid<i32> = grid![[1,2][3,4]];
+    /// let new_grid: Grid<Option<i32>> = grid.indexed_map_ref(|(row, col), v| (row > col).then_some(*v));
+    /// assert_eq!(new_grid, grid![[None,None][Some(3),None]]);
+    /// ```
+    #[must_use]
+    pub fn indexed_map_ref<U, F>(&self, f: F) -> Grid<U>
+    where
+        F: Fn((usize, usize), &T) -> U,
+    {
+        Grid {
+            data: self.indexed_iter().map(|(idx, val)| f(idx, val)).collect(),
+            cols: self.cols,
+            rows: self.rows,
+            order: self.order,
+        }
+    }
+
     /// Iterate over the rows of the grid. Each time an iterator over a single
     /// row is returned.
     ///
@@ -3859,6 +3919,74 @@ mod test {
         let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
         let mapped = grid.map_ref(|x| *x * 2);
         test_grid(&mapped, 2, 3, Order::RowMajor, &[2, 4, 6, 8, 10, 12]);
+    }
+
+    #[test]
+    fn indexed_map() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mapped = grid.indexed_map(|(row, col), x| x + row as u8 + col as u8);
+        // (0,0): 1+0+0=1, (0,1): 2+0+1=3, (0,2): 3+0+2=5
+        // (1,0): 4+1+0=5, (1,1): 5+1+1=7, (1,2): 6+1+2=9
+        test_grid(&mapped, 2, 3, Order::RowMajor, &[1, 3, 5, 5, 7, 9]);
+    }
+
+    #[test]
+    fn indexed_map_ref() {
+        let grid: Grid<u8> = grid![[1,2,3][4,5,6]];
+        let mapped = grid.indexed_map_ref(|(row, col), x| *x + row as u8 + col as u8);
+        // (0,0): 1+0+0=1, (0,1): 2+0+1=3, (0,2): 3+0+2=5
+        // (1,0): 4+1+0=5, (1,1): 5+1+1=7, (1,2): 6+1+2=9
+        test_grid(&mapped, 2, 3, Order::RowMajor, &[1, 3, 5, 5, 7, 9]);
+    }
+
+    #[test]
+    fn indexed_map_column_major() {
+        let grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
+        let mapped = grid.indexed_map(|(row, col), x| x + row as u8 + col as u8);
+        // The mapping still uses (row, col) indices regardless of storage order
+        // (0,0): 1+0+0=1, (0,1): 2+0+1=3, (0,2): 3+0+2=5
+        // (1,0): 4+1+0=5, (1,1): 5+1+1=7, (1,2): 6+1+2=9
+        // In column-major storage: [1, 5, 3, 7, 5, 9]
+        test_grid(&mapped, 2, 3, Order::ColumnMajor, &[1, 5, 3, 7, 5, 9]);
+    }
+
+    #[test]
+    fn indexed_map_ref_column_major() {
+        let grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 4, 2, 5, 3, 6], 3, Order::ColumnMajor);
+        let mapped = grid.indexed_map_ref(|(row, col), x| *x + row as u8 + col as u8);
+        // The mapping still uses (row, col) indices regardless of storage order
+        // (0,0): 1+0+0=1, (0,1): 2+0+1=3, (0,2): 3+0+2=5
+        // (1,0): 4+1+0=5, (1,1): 5+1+1=7, (1,2): 6+1+2=9
+        // In column-major storage: [1, 5, 3, 7, 5, 9]
+        test_grid(&mapped, 2, 3, Order::ColumnMajor, &[1, 5, 3, 7, 5, 9]);
+    }
+
+    #[test]
+    fn indexed_map_empty() {
+        let grid: Grid<u8> = Grid::new(0, 0);
+        let mapped = grid.indexed_map(|(row, col), x| x + row as u8 + col as u8);
+        test_grid(&mapped, 0, 0, Order::RowMajor, &[]);
+    }
+
+    #[test]
+    fn indexed_map_ref_empty() {
+        let grid: Grid<u8> = Grid::new(0, 0);
+        let mapped = grid.indexed_map_ref(|(row, col), x| *x + row as u8 + col as u8);
+        test_grid(&mapped, 0, 0, Order::RowMajor, &[]);
+    }
+
+    #[test]
+    fn indexed_map_option() {
+        let grid: Grid<i32> = grid![[1,2][3,4]];
+        let mapped: Grid<Option<i32>> = grid.indexed_map(|(row, col), v| (row > col).then_some(v));
+        assert_eq!(mapped, grid![[None,None][Some(3),None]]);
+    }
+
+    #[test]
+    fn indexed_map_ref_option() {
+        let grid: Grid<i32> = grid![[1,2][3,4]];
+        let mapped: Grid<Option<i32>> = grid.indexed_map_ref(|(row, col), v| (row > col).then_some(*v));
+        assert_eq!(mapped, grid![[None,None][Some(3),None]]);
     }
 
     #[test]
