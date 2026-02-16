@@ -4148,11 +4148,17 @@ mod test {
         // Test deleting multiple rows to ensure correctness
         let mut grid = grid![[1,2,3][4,5,6][7,8,9][10,11,12]];
         assert!(grid.delete_row(2));
-        test_grid(&grid, 3, 3, Order::RowMajor, &[1,2,3,4,5,6,10,11,12]);
+        test_grid(
+            &grid,
+            3,
+            3,
+            Order::RowMajor,
+            &[1, 2, 3, 4, 5, 6, 10, 11, 12],
+        );
         assert!(grid.delete_row(1));
-        test_grid(&grid, 2, 3, Order::RowMajor, &[1,2,3,10,11,12]);
+        test_grid(&grid, 2, 3, Order::RowMajor, &[1, 2, 3, 10, 11, 12]);
         assert!(grid.delete_row(0));
-        test_grid(&grid, 1, 3, Order::RowMajor, &[10,11,12]);
+        test_grid(&grid, 1, 3, Order::RowMajor, &[10, 11, 12]);
     }
 
     #[test]
@@ -4160,11 +4166,11 @@ mod test {
         // Test deleting multiple columns to ensure correctness
         let mut grid = grid![[1,2,3,4][5,6,7,8][9,10,11,12]];
         assert!(grid.delete_col(2));
-        test_grid(&grid, 3, 3, Order::RowMajor, &[1,2,4,5,6,8,9,10,12]);
+        test_grid(&grid, 3, 3, Order::RowMajor, &[1, 2, 4, 5, 6, 8, 9, 10, 12]);
         assert!(grid.delete_col(1));
-        test_grid(&grid, 3, 2, Order::RowMajor, &[1,4,5,8,9,12]);
+        test_grid(&grid, 3, 2, Order::RowMajor, &[1, 4, 5, 8, 9, 12]);
         assert!(grid.delete_col(0));
-        test_grid(&grid, 3, 1, Order::RowMajor, &[4,8,12]);
+        test_grid(&grid, 3, 1, Order::RowMajor, &[4, 8, 12]);
     }
 
     #[test]
@@ -4172,7 +4178,7 @@ mod test {
         // Verify delete_row produces same result as remove_row
         let mut grid1 = grid![[1,2][3,4][5,6]];
         let mut grid2 = grid![[1,2][3,4][5,6]];
-        
+
         grid1.delete_row(1);
         let _ = grid2.remove_row(1);
         assert_eq!(grid1, grid2);
@@ -4183,7 +4189,7 @@ mod test {
         // Verify delete_col produces same result as remove_col
         let mut grid1 = grid![[1,2,3][4,5,6][7,8,9]];
         let mut grid2 = grid![[1,2,3][4,5,6][7,8,9]];
-        
+
         grid1.delete_col(1);
         let _ = grid2.remove_col(1);
         assert_eq!(grid1, grid2);
