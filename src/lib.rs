@@ -1664,6 +1664,7 @@ impl<T> Grid<T> {
     /// let new_grid: Grid<Option<i32>> = grid.indexed_map(|(row, col), v| (row > col).then_some(v));
     /// assert_eq!(new_grid, grid![[None,None][Some(3),None]]);
     /// ```
+    #[must_use]
     pub fn indexed_map<U, F>(self, mut f: F) -> Grid<U>
     where
         F: FnMut((usize, usize), T) -> U,
