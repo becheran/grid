@@ -504,6 +504,18 @@ impl<T> Grid<T> {
         }
     }
 
+    #[inline]
+    #[must_use]
+    fn safe_add(lhs: usize, rhs: usize) -> usize {
+        lhs.checked_add(rhs).expect("grid dimensions overflow")
+    }
+
+    #[inline]
+    #[must_use]
+    fn safe_multiply(rows: usize, cols: usize) -> usize {
+        rows.checked_mul(cols).expect("grid dimensions overflow")
+    }
+
     /// Returns the index of the coordinates in the internal vector.
     #[inline]
     #[must_use]
@@ -1746,8 +1758,9 @@ impl<T: Default> Grid<T> {
     /// This method will be significantly slower if the grid uses a column-major memory layout.
     pub fn expand_rows(&mut self, rows: usize) {
         if rows > 0 && self.cols > 0 {
-            self.data
-                .resize_with(self.data.len() + rows * self.cols, T::default);
+            let new_rows = Self::safe_add(self.rows, rows);
+            let new_len = Self::safe_multiply(new_rows, self.cols);
+            self.data.resize_with(new_len, T::default);
 
             if self.order == Order::ColumnMajor {
                 for row_added in 0..rows {
@@ -1758,7 +1771,7 @@ impl<T: Default> Grid<T> {
                     }
                 }
             }
-            self.rows += rows;
+            self.rows = new_rows;
         }
     }
 
@@ -1783,8 +1796,9 @@ impl<T: Default> Grid<T> {
     /// This method will be significantly slower if the grid uses a row-major memory layout.
     pub fn expand_cols(&mut self, cols: usize) {
         if cols > 0 && self.rows > 0 {
-            self.data
-                .resize_with(self.data.len() + cols * self.rows, T::default);
+            let new_cols = Self::safe_add(self.cols, cols);
+            let new_len = Self::safe_multiply(self.rows, new_cols);
+            self.data.resize_with(new_len, T::default);
 
             if self.order == Order::RowMajor {
                 for col_added in 0..cols {
@@ -1795,7 +1809,7 @@ impl<T: Default> Grid<T> {
                     }
                 }
             }
-            self.cols += cols;
+            self.cols = new_cols;
         }
     }
 
@@ -1822,8 +1836,9 @@ impl<T: Default> Grid<T> {
     /// This method will be significantly slower if the grid uses a column-major memory layout.
     pub fn prepend_rows(&mut self, rows: usize) {
         if rows > 0 && self.cols > 0 {
-            self.data
-                .resize_with(self.data.len() + rows * self.cols, T::default);
+            let new_rows = Self::safe_add(self.rows, rows);
+            let new_len = Self::safe_multiply(new_rows, self.cols);
+            self.data.resize_with(new_len, T::default);
 
             match self.order {
                 Order::RowMajor => {
@@ -1843,7 +1858,7 @@ impl<T: Default> Grid<T> {
                     }
                 }
             }
-            self.rows += rows;
+            self.rows = new_rows;
         }
     }
 
@@ -1868,8 +1883,9 @@ impl<T: Default> Grid<T> {
     /// This method will be significantly slower if the grid uses a row-major memory layout.
     pub fn prepend_cols(&mut self, cols: usize) {
         if cols > 0 && self.rows > 0 {
-            self.data
-                .resize_with(self.data.len() + cols * self.rows, T::default);
+            let new_cols = Self::safe_add(self.cols, cols);
+            let new_len = Self::safe_multiply(self.rows, new_cols);
+            self.data.resize_with(new_len, T::default);
 
             match self.order {
                 Order::RowMajor => {
@@ -1889,7 +1905,7 @@ impl<T: Default> Grid<T> {
                     }
                 }
             }
-            self.cols += cols;
+            self.cols = new_cols;
         }
     }
 }
@@ -2889,6 +2905,50 @@ mod test {
         assert_eq!(grid.rows(), 1);
         assert_eq!(grid.cols(), 3);
         assert_eq!(grid.into_vec(), vec![1, 1, 1]);
+    }
+
+    fn assert_growth_overflow_keeps_grid_valid(grow: impl FnOnce(&mut Grid<u8>)) {
+        let mut grid = Grid::from_vec_with_order(vec![1, 2], 2, Order::RowMajor);
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| grow(&mut grid)));
+
+        assert!(result.is_err());
+        assert_eq!(grid.size(), (1, 2));
+        assert_eq!(grid.get(0, 0), Some(&1));
+        assert_eq!(grid.get(0, 1), Some(&2));
+        assert_eq!(grid.get(1, 0), None);
+    }
+
+    #[test]
+    fn expand_rows_overflow_keeps_grid_valid() {
+        assert_growth_overflow_keeps_grid_valid(|grid| grid.expand_rows(usize::MAX / 2));
+    }
+
+    #[test]
+    fn expand_rows_overflow_safe_get_regression() {
+        let mut grid = Grid::from_vec(vec![1_u8, 2_u8], 2);
+
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            grid.expand_rows(usize::MAX / 2);
+        }));
+
+        assert!(result.is_err());
+        assert_eq!(grid.get(0, 0), Some(&1));
+    }
+
+    #[test]
+    fn expand_cols_overflow_keeps_grid_valid() {
+        assert_growth_overflow_keeps_grid_valid(|grid| grid.expand_cols(usize::MAX));
+    }
+
+    #[test]
+    fn prepend_rows_overflow_keeps_grid_valid() {
+        assert_growth_overflow_keeps_grid_valid(|grid| grid.prepend_rows(usize::MAX / 2));
+    }
+
+    #[test]
+    fn prepend_cols_overflow_keeps_grid_valid() {
+        assert_growth_overflow_keeps_grid_valid(|grid| grid.prepend_cols(usize::MAX));
     }
 
     #[test]

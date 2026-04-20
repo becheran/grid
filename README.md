@@ -15,5 +15,17 @@ To use *grid* with *no_std* import the library such as:
 grid = { version = "*", default-features = false }
 ```
 
+## Safety checks
+
+The CI in [.github/workflows/rust.yml](.github/workflows/rust.yml) runs the test suite under Miri to catch undefined behavior in exercised code paths.
+
+To run the same check locally:
+
+``` sh
+rustup toolchain install nightly --component miri
+cargo +nightly miri setup
+cargo +nightly miri test --verbose
+```
+
 - [documentation](https://docs.rs/grid/latest/grid/)
 - [library on crates.io](https://crates.io/crates/grid)
