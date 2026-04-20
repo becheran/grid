@@ -42,6 +42,9 @@ assert_eq!(grid, grid![[1,2,3][4,5,6][7,8,9]])
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(all(test, not(feature = "std")))]
+extern crate std;
+
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 #[cfg(not(feature = "std"))]
@@ -985,7 +988,7 @@ impl<T> Grid<T> {
                 self.data[col_idx..col_idx + self.rows + i].rotate_right(i);
             }
         }
-        self.rows += 1;
+        self.rows = Self::safe_add(self.rows, 1);
         if self.cols == 0 {
             self.cols = self.data.len();
         }
@@ -1040,7 +1043,7 @@ impl<T> Grid<T> {
                 self.data[row_idx..row_idx + self.cols + i].rotate_right(i);
             }
         }
-        self.cols += 1;
+        self.cols = Self::safe_add(self.cols, 1);
         if self.rows == 0 {
             self.rows = self.data.len();
         }
@@ -1316,8 +1319,10 @@ impl<T> Grid<T> {
     /// Panics if:
     /// - the grid is not empty and `row.len() != grid.cols()`.
     /// - the index is greater than the number of rows
+    /// - inserted row is empty
     pub fn insert_row(&mut self, index: usize, row: Vec<T>) {
         let input_len = row.len();
+        assert_ne!(input_len, 0, "Inserted row must not be empty.");
         assert!(
             !(self.cols > 0 && input_len != self.cols),
             "Inserted row must be of length {}, but was {}.",
@@ -1343,7 +1348,7 @@ impl<T> Grid<T> {
             }
         }
         self.cols = input_len;
-        self.rows += 1;
+        self.rows = Self::safe_add(self.rows, 1);
     }
 
     /// Insert a new column at the index.
@@ -1369,8 +1374,10 @@ impl<T> Grid<T> {
     /// Panics if:
     /// - the grid is not empty and `col.len() != grid.rows()`.
     /// - the index is greater than the number of columns
+    /// - inserted row is empty
     pub fn insert_col(&mut self, index: usize, col: Vec<T>) {
         let input_len = col.len();
+        assert_ne!(input_len, 0, "Inserted col must not be empty.");
         assert!(
             !(self.rows > 0 && input_len != self.rows),
             "Inserted col must be of length {}, but was {}.",
@@ -1396,7 +1403,7 @@ impl<T> Grid<T> {
             }
         }
         self.rows = input_len;
-        self.cols += 1;
+        self.cols = Self::safe_add(self.cols, 1);
     }
 
     /// Returns a reference to the internal data structure of the grid.
@@ -2393,6 +2400,14 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn insert_col_empty_input_panics() {
+        let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
+        grid.insert_col(0, vec![]);
+    }
+
+    #[test]
     fn insert_col_at_end_column_major() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 3, 2, 4], 2, Order::ColumnMajor);
         grid.insert_col(2, vec![5, 6]);
@@ -2415,6 +2430,14 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn insert_col_empty_input_panics_column_major() {
+        let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
+        grid.insert_col(0, vec![]);
+    }
+
+    #[test]
     fn insert_row_at_end() {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![1, 2, 3, 4], 2, Order::RowMajor);
         grid.insert_row(2, vec![5, 6]);
@@ -2426,6 +2449,14 @@ mod test {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
         grid.insert_row(0, vec![1, 2, 3]);
         test_grid(&grid, 1, 3, Order::RowMajor, &[1, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn insert_row_empty_input_panics() {
+        let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::RowMajor);
+        grid.insert_row(0, vec![]);
     }
 
     #[test]
@@ -2463,6 +2494,14 @@ mod test {
         let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
         grid.insert_row(0, vec![1, 2, 3]);
         test_grid(&grid, 1, 3, Order::ColumnMajor, &[1, 2, 3]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn insert_row_empty_input_panics_column_major() {
+        let mut grid: Grid<u8> = Grid::from_vec_with_order(vec![], 0, Order::ColumnMajor);
+        grid.insert_row(0, vec![]);
     }
 
     #[test]
@@ -2949,6 +2988,54 @@ mod test {
     #[test]
     fn prepend_cols_overflow_keeps_grid_valid() {
         assert_growth_overflow_keeps_grid_valid(|grid| grid.prepend_cols(usize::MAX));
+    }
+
+    fn assert_failed_insert_row_keeps_grid_valid<T>(mut grid: Grid<T>)
+    where
+        T: fmt::Debug + PartialEq,
+    {
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            grid.insert_row(0, vec![]);
+        }));
+
+        assert!(result.is_err());
+        assert_eq!(grid.size(), (0, 0));
+        assert!(grid.is_empty());
+        assert_eq!(grid.get(0, 0), None);
+    }
+
+    fn assert_failed_insert_col_keeps_grid_valid<T>(mut grid: Grid<T>)
+    where
+        T: fmt::Debug + PartialEq,
+    {
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            grid.insert_col(0, vec![]);
+        }));
+
+        assert!(result.is_err());
+        assert_eq!(grid.size(), (0, 0));
+        assert!(grid.is_empty());
+        assert_eq!(grid.get(0, 0), None);
+    }
+
+    #[test]
+    fn insert_row_empty_input_keeps_empty_grid_valid() {
+        assert_failed_insert_row_keeps_grid_valid(Grid::<u8>::new(0, 0));
+    }
+
+    #[test]
+    fn insert_col_empty_input_keeps_empty_grid_valid() {
+        assert_failed_insert_col_keeps_grid_valid(Grid::<u8>::new(0, 0));
+    }
+
+    #[test]
+    fn insert_row_empty_input_keeps_zst_grid_valid() {
+        assert_failed_insert_row_keeps_grid_valid(Grid::<()>::new(0, 0));
+    }
+
+    #[test]
+    fn insert_col_empty_input_keeps_zst_grid_valid() {
+        assert_failed_insert_col_keeps_grid_valid(Grid::<()>::new(0, 0));
     }
 
     #[test]
