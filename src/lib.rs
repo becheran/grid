@@ -259,7 +259,7 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for Grid<T> {
                     .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(1, &self))?;
                 let order = seq.next_element()?.unwrap_or_default();
-                Ok(Grid::from_vec_with_order(data, cols, order))
+                build_grid(data, cols, order)
             }
 
             fn visit_map<V>(self, mut map: V) -> Result<Grid<T>, V::Error>
@@ -294,8 +294,28 @@ impl<'de, T: Deserialize<'de>> Deserialize<'de> for Grid<T> {
                 let cols = cols.ok_or_else(|| de::Error::missing_field("cols"))?;
                 let data = data.ok_or_else(|| de::Error::missing_field("data"))?;
                 let order = order.unwrap_or_default();
-                Ok(Grid::from_vec_with_order(data, cols, order))
+                build_grid(data, cols, order)
             }
+        }
+
+        // Validate untrusted input instead of panicking in `from_vec_with_order`.
+        fn build_grid<T, E: de::Error>(
+            data: Vec<T>,
+            cols: usize,
+            order: Order,
+        ) -> Result<Grid<T>, E> {
+            let valid = data
+                .len()
+                .checked_rem(cols)
+                .map_or(data.is_empty(), |rem| rem == 0);
+            if !valid {
+                return Err(E::custom(format_args!(
+                    "data length {} should be a multiple of cols = {}",
+                    data.len(),
+                    cols
+                )));
+            }
+            Ok(Grid::from_vec_with_order(data, cols, order))
         }
 
         const FIELDS: &[&str] = &["cols", "data", "order"];
@@ -1340,12 +1360,7 @@ impl<T> Grid<T> {
                 let data_idx = index * input_len;
                 self.data.splice(data_idx..data_idx, row);
             }
-            Order::ColumnMajor => {
-                for (col_iter, row_val) in row.into_iter().enumerate() {
-                    let data_idx = col_iter * self.rows + index + col_iter;
-                    self.data.insert(data_idx, row_val);
-                }
-            }
+            Order::ColumnMajor => self.insert_into_blocks(self.rows, index, row),
         }
         self.cols = input_len;
         self.rows = Self::safe_add(self.rows, 1);
@@ -1391,12 +1406,7 @@ impl<T> Grid<T> {
             self.cols
         );
         match self.order {
-            Order::RowMajor => {
-                for (row_iter, col_val) in col.into_iter().enumerate() {
-                    let data_idx = row_iter * self.cols + index + row_iter;
-                    self.data.insert(data_idx, col_val);
-                }
-            }
+            Order::RowMajor => self.insert_into_blocks(self.cols, index, col),
             Order::ColumnMajor => {
                 let data_idx = index * input_len;
                 self.data.splice(data_idx..data_idx, col);
@@ -1404,6 +1414,25 @@ impl<T> Grid<T> {
         }
         self.rows = input_len;
         self.cols = Self::safe_add(self.cols, 1);
+    }
+
+    /// Treats the data as `values.len()` consecutive blocks of `block_len` elements and
+    /// inserts `values[i]` at offset `index` of block `i`.
+    ///
+    /// Runs in `O(len + values.len()²)` instead of the `O(len * values.len())`
+    /// of one `Vec::insert` per value.
+    fn insert_into_blocks(&mut self, block_len: usize, index: usize, values: Vec<T>) {
+        let count = values.len();
+        self.data.extend(values);
+        // Before step `i`, blocks `0..=i` are untouched and followed by `values[0..=i]`.
+        for i in (0..count).rev() {
+            let start = i * block_len;
+            let end = start + block_len + i + 1;
+            // [.., block[index..], v0..=vi] -> [.., v0..=vi, block[index..]]
+            self.data[start + index..end].rotate_right(i + 1);
+            // [block[..index], v0..vi] -> [v0..vi, block[..index]]
+            self.data[start..start + index + i].rotate_right(i);
+        }
     }
 
     /// Returns a reference to the internal data structure of the grid.
@@ -1462,15 +1491,7 @@ impl<T> Grid<T> {
                     self.data[idx..idx + self.cols].reverse();
                 }
             }
-            Order::ColumnMajor => {
-                for col in 0..self.cols / 2 {
-                    for row in 0..self.rows {
-                        let cell1 = self.get_index(row, col);
-                        let cell2 = self.get_index(row, self.cols - col - 1);
-                        self.data.swap(cell1, cell2);
-                    }
-                }
-            }
+            Order::ColumnMajor => Self::swap_mirrored_blocks(&mut self.data, self.rows),
         }
     }
 
@@ -1491,21 +1512,25 @@ impl<T> Grid<T> {
     /// which is the default.
     pub fn flip_rows(&mut self) {
         match self.order {
-            Order::RowMajor => {
-                for row in 0..self.rows / 2 {
-                    for col in 0..self.cols {
-                        let cell1 = self.get_index(row, col);
-                        let cell2 = self.get_index(self.rows - row - 1, col);
-                        self.data.swap(cell1, cell2);
-                    }
-                }
-            }
+            Order::RowMajor => Self::swap_mirrored_blocks(&mut self.data, self.cols),
             Order::ColumnMajor => {
                 for col in 0..self.cols {
                     let idx = col * self.rows;
                     self.data[idx..idx + self.rows].reverse();
                 }
             }
+        }
+    }
+
+    /// Reverses the order of the consecutive blocks of `block_len` elements in `data`,
+    /// keeping the order of the elements within each block.
+    fn swap_mirrored_blocks(data: &mut [T], block_len: usize) {
+        if block_len == 0 {
+            return;
+        }
+        let mut blocks = data.chunks_exact_mut(block_len);
+        while let (Some(front), Some(back)) = (blocks.next(), blocks.next_back()) {
+            front.swap_with_slice(back);
         }
     }
 
@@ -1770,12 +1795,9 @@ impl<T: Default> Grid<T> {
             self.data.resize_with(new_len, T::default);
 
             if self.order == Order::ColumnMajor {
-                for row_added in 0..rows {
-                    for i in (1..self.cols).rev() {
-                        let total_rows = self.rows + row_added;
-                        let col_idx = i * total_rows;
-                        self.data[col_idx..col_idx + total_rows + i].rotate_right(i);
-                    }
+                for i in (1..self.cols).rev() {
+                    let col_idx = i * self.rows;
+                    self.data[col_idx..col_idx + self.rows + i * rows].rotate_right(i * rows);
                 }
             }
             self.rows = new_rows;
@@ -1808,12 +1830,9 @@ impl<T: Default> Grid<T> {
             self.data.resize_with(new_len, T::default);
 
             if self.order == Order::RowMajor {
-                for col_added in 0..cols {
-                    for i in (1..self.rows).rev() {
-                        let total_cols = self.cols + col_added;
-                        let row_idx = i * total_cols;
-                        self.data[row_idx..row_idx + total_cols + i].rotate_right(i);
-                    }
+                for i in (1..self.rows).rev() {
+                    let row_idx = i * self.cols;
+                    self.data[row_idx..row_idx + self.cols + i * cols].rotate_right(i * cols);
                 }
             }
             self.cols = new_cols;
@@ -1848,20 +1867,12 @@ impl<T: Default> Grid<T> {
             self.data.resize_with(new_len, T::default);
 
             match self.order {
-                Order::RowMajor => {
-                    for i in (0..self.rows).rev() {
-                        let s = i * self.cols;
-                        let e = (i + rows + 1) * self.cols;
-                        self.data[s..e].rotate_left(self.cols);
-                    }
-                }
+                Order::RowMajor => self.data.rotate_right(rows * self.cols),
                 Order::ColumnMajor => {
-                    for row_added in 0..rows {
-                        for i in (0..self.cols).rev() {
-                            let total_rows = self.rows + row_added;
-                            let col_idx = i * total_rows;
-                            self.data[col_idx..=col_idx + total_rows + i].rotate_right(i + 1);
-                        }
+                    for i in (0..self.cols).rev() {
+                        let col_idx = i * self.rows;
+                        let shift = (i + 1) * rows;
+                        self.data[col_idx..col_idx + self.rows + shift].rotate_right(shift);
                     }
                 }
             }
@@ -1896,21 +1907,13 @@ impl<T: Default> Grid<T> {
 
             match self.order {
                 Order::RowMajor => {
-                    for col_added in 0..cols {
-                        for i in (0..self.rows).rev() {
-                            let total_cols = self.cols + col_added;
-                            let row_idx = i * total_cols;
-                            self.data[row_idx..=row_idx + total_cols + i].rotate_right(i + 1);
-                        }
+                    for i in (0..self.rows).rev() {
+                        let row_idx = i * self.cols;
+                        let shift = (i + 1) * cols;
+                        self.data[row_idx..row_idx + self.cols + shift].rotate_right(shift);
                     }
                 }
-                Order::ColumnMajor => {
-                    for i in (0..self.cols).rev() {
-                        let s = i * self.rows;
-                        let e = (i + cols + 1) * self.rows;
-                        self.data[s..e].rotate_left(self.rows);
-                    }
-                }
+                Order::ColumnMajor => self.data.rotate_right(cols * self.rows),
             }
             self.cols = new_cols;
         }
@@ -1940,12 +1943,16 @@ impl<T: Clone> Clone for Grid<T> {
 }
 
 impl<T: hash::Hash> hash::Hash for Grid<T> {
+    /// Hashes the logical (row-major) content, so grids that compare equal
+    /// with a different internal [`Order`] also hash equally.
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.rows.hash(state);
         self.cols.hash(state);
-        self.order.hash(state);
-        self.data.hash(state);
+        match self.order {
+            Order::RowMajor => self.data.iter().for_each(|item| item.hash(state)),
+            Order::ColumnMajor => self.iter_rows().flatten().for_each(|item| item.hash(state)),
+        }
     }
 }
 
@@ -2066,38 +2073,58 @@ impl<T: PartialEq> PartialEq for Grid<T> {
 
 impl<T: Eq> Eq for Grid<T> {}
 
+/// Panics if the rows don't all have the same length and returns that length otherwise.
+fn uniform_row_len<T, R: AsRef<[T]>>(rows: &[R]) -> usize {
+    let cols = rows.first().map_or(0, |row| row.as_ref().len());
+    assert!(
+        rows.iter().all(|row| row.as_ref().len() == cols),
+        "all rows must have the same length of {}",
+        cols
+    );
+    cols
+}
+
+/// # Panics
+///
+/// Panics if the rows don't all have the same length.
 impl<T> From<Vec<Vec<T>>> for Grid<T> {
-    #[allow(clippy::redundant_closure_for_method_calls)]
     fn from(vec: Vec<Vec<T>>) -> Self {
-        let cols = vec.first().map_or(0, |row| row.len());
-        Self::from_vec_with_order(vec.into_iter().flatten().collect(), cols, Order::default())
+        let cols = uniform_row_len(&vec);
+        let mut data = Vec::with_capacity(Self::safe_multiply(vec.len(), cols));
+        for row in vec {
+            data.extend(row);
+        }
+        Self::from_vec_with_order(data, cols, Order::default())
     }
 }
 
+/// # Panics
+///
+/// Panics if the rows don't all have the same length.
 impl<T: Clone> From<&Vec<Vec<T>>> for Grid<T> {
-    #[allow(clippy::redundant_closure_for_method_calls)]
     fn from(vec: &Vec<Vec<T>>) -> Self {
-        let cols = vec.first().map_or(0, |row| row.len());
-        Self::from_vec_with_order(
-            vec.clone().into_iter().flatten().collect(),
-            cols,
-            Order::default(),
-        )
+        Self::from_row_slices(vec)
     }
 }
 
+/// # Panics
+///
+/// Panics if the rows don't all have the same length.
 impl<T: Clone> From<&Vec<&Vec<T>>> for Grid<T> {
-    #[allow(clippy::redundant_closure_for_method_calls)]
     fn from(vec: &Vec<&Vec<T>>) -> Self {
-        let cols = vec.first().map_or(0, |row| row.len());
-        Self::from_vec_with_order(
-            vec.clone()
-                .into_iter()
-                .flat_map(|inner| inner.clone())
-                .collect(),
-            cols,
-            Order::default(),
-        )
+        Self::from_row_slices(vec)
+    }
+}
+
+impl<T: Clone> Grid<T> {
+    /// Clones equally long rows into a row-major grid with a single allocation.
+    fn from_row_slices<R: AsRef<[T]>>(rows: &[R]) -> Self {
+        let cols = uniform_row_len(rows);
+        let mut data = Vec::with_capacity(Self::safe_multiply(rows.len(), cols));
+        for row in rows {
+            data.extend_from_slice(row.as_ref());
+        }
+        Self::from_vec_with_order(data, cols, Order::default())
     }
 }
 
@@ -2213,6 +2240,105 @@ mod test {
         assert_eq!(grid.cols, cols, "number of cols is unexpected");
         assert_eq!(grid.order, order, "grid order is unexpected");
         assert_eq!(grid.data, data, "internal data is unexpected");
+    }
+
+    /// Checks the bulk-moving methods against a naive `Vec<Vec<_>>` model
+    /// for all small shapes, both orders and all valid arguments.
+    #[test]
+    #[allow(clippy::cast_possible_truncation)]
+    fn mutations_match_vec_of_vecs_model() {
+        fn build(model: &[Vec<u32>], order: Order) -> Grid<u32> {
+            let mut grid = Grid::from_vec_with_order(Vec::new(), 0, order);
+            for row in model {
+                grid.push_row(row.clone());
+            }
+            grid
+        }
+        fn check(grid: &Grid<u32>, model: &[Vec<u32>], order: Order) {
+            assert_eq!(grid.order(), order);
+            assert_eq!(
+                grid.size(),
+                (model.len(), model.first().map_or(0, Vec::len))
+            );
+            assert_eq!(*grid, Grid::from(model.to_vec()));
+        }
+        for order in [Order::RowMajor, Order::ColumnMajor] {
+            for rows in 0..5_u32 {
+                for cols in 0..5_u32 {
+                    let model: Vec<Vec<u32>> = (0..rows)
+                        .map(|r| (0..cols).map(|c| r * 10 + c).collect())
+                        .collect();
+                    let model = if cols == 0 { Vec::new() } else { model };
+                    let (rows, cols) = (model.len(), model.first().map_or(0, Vec::len));
+                    let grid = build(&model, order);
+                    let new_row_len = if cols == 0 { 3 } else { cols };
+                    let new_col_len = if rows == 0 { 3 } else { rows };
+
+                    for idx in 0..=rows {
+                        let mut g = grid.clone();
+                        let mut m = model.clone();
+                        let row: Vec<u32> = (100..100 + new_row_len as u32).collect();
+                        g.insert_row(idx, row.clone());
+                        m.insert(idx, row);
+                        check(&g, &m, order);
+                    }
+                    for idx in 0..=cols {
+                        let mut g = grid.clone();
+                        let col: Vec<u32> = (100..100 + new_col_len as u32).collect();
+                        g.insert_col(idx, col.clone());
+                        let mut m = if model.is_empty() {
+                            vec![Vec::new(); new_col_len]
+                        } else {
+                            model.clone()
+                        };
+                        m.iter_mut().zip(col).for_each(|(r, v)| r.insert(idx, v));
+                        check(&g, &m, order);
+                    }
+                    for k in 0..4 {
+                        let mut g = grid.clone();
+                        let mut m = model.clone();
+                        g.expand_rows(k);
+                        m.extend((0..k).map(|_| vec![0; cols]));
+                        check(&g, if cols == 0 { &model } else { &m }, order);
+
+                        let mut g = grid.clone();
+                        let mut m = model.clone();
+                        g.prepend_rows(k);
+                        m.splice(0..0, (0..k).map(|_| vec![0; cols]));
+                        check(&g, if cols == 0 { &model } else { &m }, order);
+
+                        let mut g = grid.clone();
+                        let mut m = model.clone();
+                        g.expand_cols(k);
+                        for r in &mut m {
+                            r.resize(cols + k, 0);
+                        }
+                        check(&g, &m, order);
+
+                        let mut g = grid.clone();
+                        let mut m = model.clone();
+                        g.prepend_cols(k);
+                        for r in &mut m {
+                            r.splice(0..0, (0..k).map(|_| 0));
+                        }
+                        check(&g, &m, order);
+                    }
+                    let mut g = grid.clone();
+                    let mut m = model.clone();
+                    g.flip_cols();
+                    for r in &mut m {
+                        r.reverse();
+                    }
+                    check(&g, &m, order);
+
+                    let mut g = grid.clone();
+                    let mut m = model.clone();
+                    g.flip_rows();
+                    m.reverse();
+                    check(&g, &m, order);
+                }
+            }
+        }
     }
 
     #[test]
@@ -3688,6 +3814,47 @@ mod test {
         assert_eq!(set.len(), 2);
     }
 
+    #[cfg(feature = "std")]
+    #[test]
+    fn hash_consistent_with_eq_across_orders() {
+        use std::hash::{BuildHasher, Hash, Hasher};
+        let row_major = grid![[1, 2, 3][4, 5, 6]];
+        let col_major = grid_cm![[1, 2, 3][4, 5, 6]];
+        assert_eq!(row_major, col_major);
+        let state = std::collections::hash_map::RandomState::new();
+        let mut a = state.build_hasher();
+        let mut b = state.build_hasher();
+        row_major.hash(&mut a);
+        col_major.hash(&mut b);
+        assert_eq!(a.finish(), b.finish());
+
+        let mut set = std::collections::HashSet::new();
+        set.insert(row_major);
+        assert!(set.contains(&col_major));
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_vec_of_vecs_ragged_rows() {
+        let _: Grid<u8> = Grid::from(vec![vec![1, 2], vec![3], vec![4]]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_ref_vec_of_vecs_ragged_rows() {
+        let _: Grid<u8> = Grid::from(&vec![vec![1, 2], vec![3], vec![4]]);
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(clippy::should_panic_without_expect)]
+    fn from_ref_vec_of_ref_vecs_ragged_rows() {
+        let (a, b, c) = (vec![1, 2], vec![3], vec![4]);
+        let _: Grid<u8> = Grid::from(&vec![&a, &b, &c]);
+    }
+
     #[test]
     fn macro_init() {
         let grid = grid![[1, 2, 3][4, 5, 6]];
@@ -4460,6 +4627,32 @@ mod test {
             let s = "{ \"cols\": 2, \"data\": [1, 3, 2, 4], \"order\": \"ColumnMajor\" }";
             let grid: Grid<u8> = serde_json::from_str(s).unwrap();
             test_grid(&grid, 2, 2, Order::ColumnMajor, &[1, 3, 2, 4]);
+        }
+
+        #[test]
+        fn deserialize_invalid_length_is_error() {
+            let s = r#"{ "cols": 3, "data": [1, 2] }"#;
+            assert!(serde_json::from_str::<Grid<u8>>(s).is_err());
+        }
+
+        #[test]
+        fn deserialize_zero_cols_with_data_is_error() {
+            let s = r#"{ "cols": 0, "data": [1] }"#;
+            assert!(serde_json::from_str::<Grid<u8>>(s).is_err());
+        }
+
+        #[test]
+        fn deserialize_seq_invalid_length_is_error() {
+            let s = "[3, [1, 2]]";
+            assert!(serde_json::from_str::<Grid<u8>>(s).is_err());
+        }
+
+        #[test]
+        fn deserialize_empty() {
+            let s = r#"{ "cols": 0, "data": [] }"#;
+            let grid: Grid<u8> = serde_json::from_str(s).unwrap();
+            assert!(grid.is_empty());
+            assert_eq!(grid.size(), (0, 0));
         }
     }
 }
